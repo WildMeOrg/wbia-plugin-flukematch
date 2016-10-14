@@ -732,7 +732,7 @@ class BC_DTW_Config(dtool.Config):
         BC_DTW(decision=average,sizes=(5, 10, 15, 20),weights=None,version=1)_CropChip()
     """
     def get_sub_config_list(self):
-        # Different pipeline compoments can go here
+        # Different pipeline components can go here
         # as well as dependencies that were not
         # explicitly enumerated in the tree structure
         return [
