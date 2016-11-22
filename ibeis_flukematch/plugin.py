@@ -729,7 +729,7 @@ class BC_DTW_Config(dtool.Config):
         >>> config = BC_DTW_Config()
         >>> result = config.get_cfgstr()
         >>> print(result)
-        BC_DTW(decision=average,sizes=(5, 10, 15, 20),weights=None,version=1)_CropChip()
+        BC_DTW(decision=max,weight_import=1,window=10,version=8)_NotchTip(version=4,kp_net=128_decoupled)_CropChip(crop_enabled=True,version=2,ext=.png)_TrailingEdge(n_nb3,ign_nTrue,version=9,te_sTrue,w_tes0.5,te_net=annot_res,te_smavg,tol=None)_BlockCurv(csize_max=8,csize_min=2,csize_step=2,version=2)
     """
     def get_sub_config_list(self):
         # Different pipeline components can go here
