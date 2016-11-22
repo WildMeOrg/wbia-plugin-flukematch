@@ -5,11 +5,11 @@ CommandLine:
     # under various configurations.
 
     # baseline test of algorithm in matplotlib
-    python -m ibeis -e rank_cdf --db humpbacks \
+    python -m ibeis -e rank_cmc --db humpbacks \
         -a default:has_any=hasnotch,mingt=2,size=50 \
         -t default:proot=BC_DTW --show
 
-    python -m ibeis -e rank_cdf --db humpbacks \
+    python -m ibeis -e rank_cmc --db humpbacks \
         -a default:has_any=hasnotch,mingt=2 \
         -t default:proot=BC_DTW --show
 
@@ -30,7 +30,7 @@ CommandLine:
 
 
     TESTING:
-        ibeis -e rank_cdf --db humpbacks_fb -a default:mingt=2,qsize=10,dsize=100 default:qmingt=2,qsize=10,dsize=100 -t default:proot=BC_DTW,decision=max,crop_dim_size=500,crop_enabled=True,manual_extract=False,use_te_scorer=True,ignore_notch=True,te_score_weight=0.5 --show
+        ibeis -e rank_cmc --db humpbacks_fb -a default:mingt=2,qsize=10,dsize=100 default:qmingt=2,qsize=10,dsize=100 -t default:proot=BC_DTW,decision=max,crop_dim_size=500,crop_enabled=True,manual_extract=False,use_te_scorer=True,ignore_notch=True,te_score_weight=0.5 --show
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ibeis
