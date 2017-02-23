@@ -41,6 +41,7 @@ import vtool as vt
 import cv2
 import math
 from os.path import join, exists
+from six.moves import zip, range, map
 from six.moves import cPickle as pickle  # NOQA
 from ibeis import constants as const
 #from collections import defaultdict
@@ -541,7 +542,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
         print('[fluke-module] WARNING: Number of neighbors for trailing edge'
               'extraction not provided, defaulting to 5')
         n_neighbors = 5
-    _iter = zip(img_paths, points, score_preds)
+    _iter = list(zip(img_paths, points, score_preds))
     progiter = ut.ProgIter(_iter, lbl='compute Trailing_Edge')
 
     def fix_point(point):
@@ -658,7 +659,7 @@ def preproc_block_curvature(depc, te_rowids, config):
     tedges = ibs.depc.get_native_property('Trailing_Edge', te_rowids, 'edge')
     # FIXME: CONFIG
     sizes = list(range(config['csize_min'], config['csize_max'] + 1, config['csize_step']))
-    sizes = map(lambda x: float(x) / 100, sizes)
+    sizes = list(map(lambda x: float(x) / 100, sizes))
 
     # call flukematch.block_integral_curvatures_cpp
     progiter = ut.ProgIter(tedges, lbl='compute Block_Curvature')

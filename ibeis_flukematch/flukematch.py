@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import ctypes
 from os.path import dirname, join
+from six.moves import zip, map, range
 from ibeis_flukematch.networks import (
     # tescorers
     build_segmenter_simple,
@@ -24,9 +25,9 @@ from itertools import chain
 import math
 
 KP_NETWORK_OPTIONS = {
-    '64_decoupled': {'url': 'kpext_64_decoupled.pickle', 'exp': build_kpextractor64_decoupled, 'size': (64, 64)},
-    '128_decoupled': {'url': 'kpext_128_decoupled.pickle', 'exp': build_kpextractor128_decoupled, 'size': (128, 128)},
-    '256_decoupled': {'url': 'kpext_256_decoupled.pickle', 'exp': build_kpextractor256_decoupled, 'size': (256, 256)},
+    '64_decoupled': {'url': 'kpext_64_decoupled.pkl', 'exp': build_kpextractor64_decoupled, 'size': (64, 64)},
+    '128_decoupled': {'url': 'kpext_128_decoupled.pkl', 'exp': build_kpextractor128_decoupled, 'size': (128, 128)},
+    '256_decoupled': {'url': 'kpext_256_decoupled.pkl', 'exp': build_kpextractor256_decoupled, 'size': (256, 256)},
 }
 
 
@@ -96,16 +97,16 @@ def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 12
 
 
 TE_NETWORK_OPTIONS = {
-    'annot_simple': {'url': 'tescorer_annot_simple.pickle', 'exp': build_segmenter_simple},
-    'fbannot_simple': {'url': 'tescorer_fbannot_simple.pickle', 'exp': build_segmenter_simple},
-    'annot_upsample': {'url': 'tescorer_annot_upsample.pickle', 'exp': build_segmenter_upsample},
-    #'fbannot_upsample':{'url':'tescorer_fbannot_upsample.pickle', 'exp':build_segmenter_upsample},
-    'annot_jet': {'url': 'tescorer_annot_jet.pickle', 'exp': build_segmenter_jet},
-    'fbannot_jet': {'url': 'tescorer_fbannot_jet.pickle', 'exp': build_segmenter_jet},
-    'annot_jet2': {'url': 'tescorer_annot_jet2.pickle', 'exp': build_segmenter_jet_2},
-    'fbannot_jet2': {'url': 'tescorer_fbannot_jet2.pickle', 'exp': build_segmenter_jet_2},
-    #'fbannot_jet_preconv':{'url':'tescorer_fbannot_jet_preconv.pickle', 'exp':build_segmenter_jet_preconv},
-    'annot_res': {'url': 'tescorer_annot_res.pickle', 'exp': build_segmenter_simple_absurd_res},
+    'annot_simple': {'url': 'tescorer_annot_simple.pkl', 'exp': build_segmenter_simple},
+    'fbannot_simple': {'url': 'tescorer_fbannot_simple.pkl', 'exp': build_segmenter_simple},
+    'annot_upsample': {'url': 'tescorer_annot_upsample.pkl', 'exp': build_segmenter_upsample},
+    #'fbannot_upsample':{'url':'tescorer_fbannot_upsample.pkl', 'exp':build_segmenter_upsample},
+    'annot_jet': {'url': 'tescorer_annot_jet.pkl', 'exp': build_segmenter_jet},
+    'fbannot_jet': {'url': 'tescorer_fbannot_jet.pkl', 'exp': build_segmenter_jet},
+    'annot_jet2': {'url': 'tescorer_annot_jet2.pkl', 'exp': build_segmenter_jet_2},
+    'fbannot_jet2': {'url': 'tescorer_fbannot_jet2.pkl', 'exp': build_segmenter_jet_2},
+    #'fbannot_jet_preconv':{'url':'tescorer_fbannot_jet_preconv.pkl', 'exp':build_segmenter_jet_preconv},
+    'annot_res': {'url': 'tescorer_annot_res.pkl', 'exp': build_segmenter_simple_absurd_res},
 }
 
 
@@ -214,7 +215,8 @@ def find_trailing_edge(img, start, end, center=None, n_neighbors=3):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     assert(n_neighbors % 2 == 1)
     #n_neighbors = img.shape[0]
-    neighbor_range = range(-1 * (n_neighbors // 2), 1 + (n_neighbors // 2))
+    neighbor_range = list(range(-1 * (n_neighbors // 2),
+                                1 + (n_neighbors // 2)))
     # start and end are x,y
     # take the vertical gradients of the image
     gradient_y_image = 1 * cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
@@ -400,7 +402,7 @@ def block_integral_curvatures_cpp(sizes, coords):
     """
     # assume coords are in x, y
     coords = np.array(coords, dtype=np.int32)
-    sizes = map(lambda x: int(math.ceil(coords.shape[0] * x)), sizes)
+    sizes = list(map(lambda x: int(math.ceil(coords.shape[0] * x)), sizes))
 
     fit_size = (np.max(coords, axis=0) -
                 np.min(coords, axis=0)) + (max(sizes) + 1)
@@ -408,7 +410,7 @@ def block_integral_curvatures_cpp(sizes, coords):
     fixed_coords = np.array(
         (coords - np.min(coords, axis=0)) + max(sizes) // 2)[:, ::-1]
     fixed_coords = np.ascontiguousarray(fixed_coords)
-    binarized[zip(*fixed_coords)] = 1
+    binarized[list(zip(*fixed_coords))] = 1
     binarized = binarized.cumsum(axis=0)
     binarized[np.where(binarized > 0)] = 1
     summed_table = binarized.cumsum(axis=0).cumsum(axis=1)
@@ -495,7 +497,7 @@ def curv_weight_gen(rel_importance, sizes):
     weights = [1]
     for _ in range(1, len(sizes)):  # reduce by one to account for the first weight
         weights.append(weights[-1] * rel_importance)
-    weights = map(lambda x: x / sum(weights), weights)
+    weights = list(map(lambda x: x / sum(weights), weights))
     return weights
 
 if __name__ == '__main__':
