@@ -820,19 +820,20 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
         >>> import ibeis
+        >>> import itertools as it
         >>> # Setup Inputs
         >>> ibs, aid_list = ibeis.testdata_aids(
         >>>     defaultdb='humpbacks', a='default:has_any=hasnotch,pername=2,mingt=2,size=10')
         >>> depc = ibs.depc
-        >>> root_rowids = list(zip(*ut.iprod(aid_list, aid_list)))
+        >>> root_rowids = tuple(zip(*it.product(aid_list, aid_list)))
         >>> qaid_list, daid_list = root_rowids
         >>> cfgdict = dict(weights=None, decision='average', sizes=(5, 10, 15, 20))
         >>> config = BC_DTW_Config(**cfgdict)
         >>> # Call function via request
-        >>> request = BC_DTW_Request.new(depc, aid_list, aid_list)
+        >>> request = BC_DTW_Request.new(depc, aid_list, aid_list, cfgdict=cfgdict)
         >>> am_list1 = request.execute()
         >>> # Call function via depcache
-        >>> prop_list = depc.get('BC_DTW', root_rowids, config=config)
+        >>> prop_list = depc.get('BC_DTW', root_rowids, config=cfgdict)
         >>> # Call function normally
         >>> score_list = list(id_algo_bc_dtw(depc, qaid_list, daid_list, config))
         >>> am_list2 = list(get_match_results(depc, qaid_list, daid_list, score_list, config))
