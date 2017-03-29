@@ -40,6 +40,8 @@ import numpy as np
 import vtool as vt
 import cv2
 import math
+import multiprocessing as mp
+from functools import partial
 from os.path import join, exists
 from six.moves import zip, range, map
 from six.moves import cPickle as pickle  # NOQA
@@ -55,7 +57,7 @@ from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          score_te,
                                          curv_weight_gen,)
 from curvrank import oriented_curvature
-from curvrank import dtw_weighted_euclidean
+from curvrank import dtw_weighted_euclidean_star
 from curvrank import get_spatial_weights
 from curvrank import resampleNd
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
@@ -679,6 +681,7 @@ class OrientedCurvConfig(dtool.Config):
     def get_param_info_list(self):
         return [
             ut.ParamInfo('scales', (0.02, 0.04, 0.06, 0.08)),
+            ut.ParamInfo('version', 1)
         ]
 
 
@@ -1024,18 +1027,25 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
         for curv in all_curves
     ]
     aid_to_curves = dict(zip(all_aids, all_curves))
-    for qaid, daid in zip(qaid_list, daid_list):
-        qcurv = aid_to_curves[qaid]
-        dcurv = aid_to_curves[daid]
-        if qcurv is None or dcurv is None:
-            yield None
-        else:
-            window_size = config['window']
-            distance = dtw_weighted_euclidean(
-                qcurv, dcurv, spatial_weights, window=window_size
-            )
-            score = np.exp(-distance / 50)
-            yield (score,)
+
+    qcurvs_dcurvs = [
+        (aid_to_curves[qaid], aid_to_curves[daid]) for (qaid, daid)
+        in zip(qaid_list, daid_list)
+    ]
+    partial_dtw_weighted_euclidean = partial(
+        dtw_weighted_euclidean_star,
+        weights=spatial_weights, window=config['window']
+    )
+
+    try:
+        pool = mp.Pool(processes=32)
+        distances = pool.imap(partial_dtw_weighted_euclidean, qcurvs_dcurvs)
+    finally:
+        pool.close()
+        pool.join()
+
+    scores = [(np.exp(-distance / 50.),) for distance in distances]
+    return scores
 
 
 if __name__ == '__main__':

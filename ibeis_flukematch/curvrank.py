@@ -103,6 +103,10 @@ def oriented_curvature(contour, radii):
     return curvature
 
 
+def dtw_weighted_euclidean_star(qcurv_dcurv, weights, window):
+    return dtw_weighted_euclidean(*qcurv_dcurv, weights=weights, window=window)
+
+
 def dtw_weighted_euclidean(qcurv, dcurv, weights, window):
     assert qcurv.dtype == np.float32, 'qcurv.dtype = %s' % qcurv.dtype
     assert dcurv.dtype == np.float32, 'dcurv.dtype = %s' % dcurv.dtype
