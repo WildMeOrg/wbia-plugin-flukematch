@@ -54,6 +54,10 @@ from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          setup_te_network,
                                          score_te,
                                          curv_weight_gen,)
+from curvrank import oriented_curvature
+from curvrank import dtw_weighted_euclidean
+from curvrank import get_spatial_weights
+from curvrank import resampleNd
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
 
 register_preproc = register_preprocs['annot']
@@ -671,6 +675,69 @@ def preproc_block_curvature(depc, te_rowids, config):
             yield (curve_arr,)
 
 
+class OrientedCurvConfig(dtool.Config):
+    def get_param_info_list(self):
+        return [
+            ut.ParamInfo('scales', (0.02, 0.04, 0.06, 0.08)),
+        ]
+
+
+@register_preproc('Oriented_Curvature', ['Trailing_Edge'], ['curvature'], [np.ndarray],
+                  configclass=OrientedCurvConfig, chunksize=256)
+def preproc_oriented_curvature(depc, te_rowids, config):
+    r"""
+    Args:
+        depc (DependencyCache):
+        aid_list (list):  list of annotation rowids
+        config (dict): (default = {'sizes': [5, 10, 15, 20]})
+
+    Yields:
+        list: [np.ndarray]
+
+    CommandLine:
+        python -m ibeis_flukematch.plugin --exec-preproc_oriented_curvature --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
+        python -m ibeis_flukematch.plugin --exec-preproc_oriented_curvature --db humpbacks --no-cnn
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> all_aids = ibs.get_valid_aids()
+        >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
+        >>> aid_list = ut.compress(all_aids, isvalid)[0:4]
+        >>> print('\n!!![test] aid_list = %r' % (aid_list,))
+        >>> depc = ibs.depc
+        >>> config = {'sizes': [5, 10, 15, 20]}
+        >>> te_rowids = depc.get_rowids('Trailing_Edge', aid_list, config)
+        >>> print('te_rowids = %r' % (te_rowids,))
+        >>> propgen = preproc_oriented_curvature(depc, te_rowids, config)
+        >>> curve_arr_list = list(propgen)
+        >>> result = ut.depth_profile(curve_arr_list)
+        >>> print(result)
+    """
+    print('Preprocess Oriented_Curvature')
+    print(config)
+
+    ibs = depc.controller
+    # NOTE: Need to use get_native_property because the take the type
+    # of the parent (trailing ege) ids, not the root (annot) ids.
+    # get the trailing edges
+    # NOTE: Can specify a single column, so unpacking is done automatically
+    tedges = ibs.depc.get_native_property('Trailing_Edge', te_rowids, 'edge')
+
+    # call flukematch.block_integral_curvatures_cpp
+    progiter = ut.ProgIter(tedges, lbl='compute Oriented_Curvature')
+    for tedge in progiter:
+        if tedge is None:
+            yield None
+        else:
+            # radius = scale * width
+            radii = np.array(config['scales']) * (
+                tedge[:, 0].max() - tedge[:, 0].min())
+            curve_arr = oriented_curvature(tedge, radii)
+            yield (curve_arr,)
+
+
 def get_match_results(depc, qaid_list, daid_list, score_list, config):
     """ converts table results into format for ipython notebook """
     #qaid_list, daid_list = request.get_parent_rowids()
@@ -863,6 +930,110 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
             window_size = int(math.ceil((config['window'] / 100) * query_curv.shape[0]))
             distance = get_distance_curvweighted(query_curv, db_curv, curv_weights,
                                                  window=window_size)
+            score = np.exp(-distance / 50)
+            yield (score,)
+
+
+class OC_WDTW_Config(dtool.Config):
+
+    def get_sub_config_list(self):
+        return [
+            NotchTipConfig,
+            CropChipConfig,
+            TrailingEdgeConfig,
+            OrientedCurvConfig,
+        ]
+
+    def get_param_info_list(self):
+        return [
+            ut.ParamInfo('decision', 'max'),
+            ut.ParamInfo('bernstein_coeffs', np.array([
+                0.0944, 0.5629, 0.7286, 0.6028, 0.0000,
+                0.0434, 0.6906, 0.7316, 0.4671, 0.0258
+            ])),
+            ut.ParamInfo('curv_length', 748),
+            ut.ParamInfo('window', 75),
+            ut.ParamInfo('version', 10),
+        ]
+
+
+class OC_WDTW_Request(dtool.base.VsOneSimilarityRequest):
+    _tablename = 'OC_WDTW'
+    _symmetric = False
+
+    def postprocess_execute(request, parent_rowids, result_list):
+        qaid_list, daid_list = list(zip(*parent_rowids))
+        score_list = [i[0] if i is not None else 0.0 for i in result_list]
+        #score_list = ut.take_column(result_list, 0)
+        depc = request.depc
+        config = request.config
+        cm_list = list(get_match_results(depc, qaid_list, daid_list,
+                                         score_list, config))
+        return cm_list
+
+
+# oriented curvature weighted dynamic time-warping
+@register_preproc(
+    tablename='OC_WDTW', parents=[ROOT, ROOT],
+    colnames=['score'], coltypes=[float],
+    configclass=OC_WDTW_Config,
+    requestclass=OC_WDTW_Request,
+    chunksize=2056)
+def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
+    r"""
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> import ibeis
+        >>> import itertools as it
+        >>> # Setup Inputs
+        >>> ibs, aid_list = ibeis.testdata_aids(
+        >>>     defaultdb='humpbacks', a='default:has_any=hasnotch,pername=2,mingt=2,size=10')
+        >>> depc = ibs.depc
+        >>> root_rowids = tuple(zip(*it.product(aid_list, aid_list)))
+        >>> qaid_list, daid_list = root_rowids
+        >>> cfgdict = dict(weights=None, decision='average', sizes=(5, 10, 15, 20))
+        >>> config = OC_WDTW_Config(**cfgdict)
+        >>> # Call function via request
+        >>> request = OC_WDTW_Request.new(depc, aid_list, aid_list, cfgdict=cfgdict)
+        >>> am_list1 = request.execute()
+        >>> # Call function via depcache
+        >>> prop_list = depc.get('OC_WDTW', root_rowids, config=cfgdict)
+        >>> # Call function normally
+        >>> score_list = list(id_algo_oc_wdtw(depc, qaid_list, daid_list, config))
+        >>> am_list2 = list(get_match_results(depc, qaid_list, daid_list, score_list, config))
+        >>> assert score_list == prop_list, 'error in cache'
+        >>> assert np.all(am_list1[0].score_list == am_list2[0].score_list)
+        >>> ut.quit_if_noshow()
+        >>> am = am_list2[0]
+        >>> am.ishow_analysis(request)
+        >>> ut.show_if_requested()
+    """
+    print('Executing OC_WDTW')
+    spatial_weights = get_spatial_weights(
+        config['curv_length'], config['bernstein_coeffs']
+    )
+    # Group pairs by qaid
+    all_aids = np.unique(ut.flatten([qaid_list, daid_list]))
+    all_curves = depc.get(
+        'Oriented_Curvature', all_aids, 'curvature', config=config
+    )
+    # resample all curves to the same number of points
+    all_curves = [
+        resampleNd(curv) if curv.shape[0] != config['curv_length']else curv
+        for curv in all_curves
+    ]
+    aid_to_curves = dict(zip(all_aids, all_curves))
+    for qaid, daid in zip(qaid_list, daid_list):
+        qcurv = aid_to_curves[qaid]
+        dcurv = aid_to_curves[daid]
+        if qcurv is None or dcurv is None:
+            yield None
+        else:
+            window_size = config['window']
+            distance = dtw_weighted_euclidean(
+                qcurv, dcurv, spatial_weights, window=window_size
+            )
             score = np.exp(-distance / 50)
             yield (score,)
 
