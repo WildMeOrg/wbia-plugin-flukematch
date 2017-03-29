@@ -56,7 +56,7 @@ from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          setup_te_network,
                                          score_te,
                                          curv_weight_gen,)
-from curvrank import oriented_curvature
+from curvrank import oriented_curvature_star
 from curvrank import dtw_weighted_euclidean_star
 from curvrank import get_spatial_weights
 from curvrank import resampleNd
@@ -681,7 +681,7 @@ class OrientedCurvConfig(dtool.Config):
     def get_param_info_list(self):
         return [
             ut.ParamInfo('scales', (0.02, 0.04, 0.06, 0.08)),
-            ut.ParamInfo('version', 1)
+            ut.ParamInfo('version', 2)
         ]
 
 
@@ -729,16 +729,23 @@ def preproc_oriented_curvature(depc, te_rowids, config):
     tedges = ibs.depc.get_native_property('Trailing_Edge', te_rowids, 'edge')
 
     # call flukematch.block_integral_curvatures_cpp
-    progiter = ut.ProgIter(tedges, lbl='compute Oriented_Curvature')
-    for tedge in progiter:
-        if tedge is None:
-            yield None
-        else:
-            # radius = scale * width
-            radii = np.array(config['scales']) * (
-                tedge[:, 0].max() - tedge[:, 0].min())
-            curve_arr = oriented_curvature(tedge, radii)
-            yield (curve_arr,)
+    #progiter = ut.ProgIter(tedges, lbl='compute Oriented_Curvature')
+    scales = np.array(config['scales'])
+    radii_list = [
+        None if tedge is None
+        else scales * (tedge[:, 0].max() - tedge[:, 0].min())
+        for tedge in tedges
+    ]
+
+    tedges_radii = zip(tedges, radii_list)
+    try:
+        pool = mp.Pool(processes=32)
+        curvs = pool.imap(oriented_curvature_star, tedges_radii)
+    finally:
+        pool.close()
+        pool.join()
+
+    return [(curv,) for curv in curvs]
 
 
 def get_match_results(depc, qaid_list, daid_list, score_list, config):
