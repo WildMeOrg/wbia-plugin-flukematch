@@ -1,0 +1,9 @@
+CC=g++
+CFLAGS=-O3 -Wall -shared -fpic
+# TODO: CMAKE
+# -I opt/local/include/eigen3
+LDFLAGS=-I/usr/include/eigen3 -I/opt/local/include/eigen3
+SOURCES=oc_wdtw.cpp
+OBJECTS=$(SOURCES:.cpp=.so)
+all:
+	$(CC) $(LDFLAGS) $(SOURCES) -o $(OBJECTS) $(CFLAGS)

@@ -40,5 +40,7 @@
 
 make
 cp -v flukematch_lib.so ibeis_flukematch
+make -f Makefile_OC_WDTW
+cp -v oc_wdtw.so ibeis_flukematch
 #cp -v libsver* ../vtool
 #cd ..
