@@ -56,10 +56,10 @@ from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          setup_te_network,
                                          score_te,
                                          curv_weight_gen,)
-from curvrank import oriented_curvature_star
-from curvrank import dtw_weighted_euclidean_star
-from curvrank import get_spatial_weights
-from curvrank import resampleNd
+from ibeis_flukematch.curvrank import oriented_curvature_star
+from ibeis_flukematch.curvrank import dtw_weighted_euclidean_star
+from ibeis_flukematch.curvrank import get_spatial_weights
+from ibeis_flukematch.curvrank import resampleNd
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
 
 register_preproc = register_preprocs['annot']
@@ -1002,9 +1002,12 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
         >>> depc = ibs.depc
         >>> root_rowids = tuple(zip(*it.product(aid_list, aid_list)))
         >>> qaid_list, daid_list = root_rowids
+        >>> # Use ibs proot
+        >>> request0 = ibs.new_query_request(aid_list, aid_list, cfgdict={'proot': 'OC_WDTW'})
+        >>> am_list0 = request0.execute()
+        >>> # Call function via request
         >>> cfgdict = dict(weights=None, decision='average', sizes=(5, 10, 15, 20))
         >>> config = OC_WDTW_Config(**cfgdict)
-        >>> # Call function via request
         >>> request = OC_WDTW_Request.new(depc, aid_list, aid_list, cfgdict=cfgdict)
         >>> am_list1 = request.execute()
         >>> # Call function via depcache

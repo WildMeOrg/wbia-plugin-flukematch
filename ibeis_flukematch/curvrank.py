@@ -2,8 +2,10 @@ import ctypes
 import numpy as np
 from scipy.interpolate import BPoly
 from scipy.interpolate import interp1d
+from os.path import dirname, join
 
-costs_lib = ctypes.cdll.LoadLibrary('dtw.so')
+costs_lib_fpath = join(dirname(__file__), 'oc_wdtw.so')
+costs_lib = ctypes.cdll.LoadLibrary(costs_lib_fpath)
 
 ndmat_f_type = np.ctypeslib.ndpointer(
     dtype=np.float32, ndim=2, flags='C_CONTIGUOUS')
