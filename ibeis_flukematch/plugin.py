@@ -56,8 +56,8 @@ from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          setup_te_network,
                                          score_te,
                                          curv_weight_gen,)
-from ibeis_flukematch.curvrank import oriented_curvature_star
-from ibeis_flukematch.curvrank import dtw_weighted_euclidean_star
+from ibeis_flukematch.curvrank import oriented_curvature
+from ibeis_flukematch.curvrank import dtw_weighted_euclidean
 from ibeis_flukematch.curvrank import get_spatial_weights
 from ibeis_flukematch.curvrank import resampleNd
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
@@ -681,7 +681,7 @@ class OrientedCurvConfig(dtool.Config):
     def get_param_info_list(self):
         return [
             ut.ParamInfo('scales', (0.02, 0.04, 0.06, 0.08)),
-            ut.ParamInfo('version', 2)
+            ut.ParamInfo('version', 3)
         ]
 
 
@@ -731,21 +731,14 @@ def preproc_oriented_curvature(depc, te_rowids, config):
     # call flukematch.block_integral_curvatures_cpp
     #progiter = ut.ProgIter(tedges, lbl='compute Oriented_Curvature')
     scales = np.array(config['scales'])
-    radii_list = [
-        None if tedge is None
-        else scales * (tedge[:, 0].max() - tedge[:, 0].min())
-        for tedge in tedges
-    ]
-
-    tedges_radii = zip(tedges, radii_list)
-    try:
-        pool = mp.Pool(processes=32)
-        curvs = pool.imap(oriented_curvature_star, tedges_radii)
-    finally:
-        pool.close()
-        pool.join()
-
-    return [(curv,) for curv in curvs]
+    for tedge in ut.ProgIter(tedges, lbl='compute Oriented_Curvature'):
+        if tedge is None:
+            yield None
+        else:
+            radii = scales * (tedge[:, 0].max() - tedge[:, 0].min())
+            # curv.shape = (tedge.shape[0], radii.shape[0])
+            curv = oriented_curvature(tedge, radii)
+            yield (curv,)
 
 
 def get_match_results(depc, qaid_list, daid_list, score_list, config):
@@ -963,7 +956,7 @@ class OC_WDTW_Config(dtool.Config):
             ])),
             ut.ParamInfo('curv_length', 748),
             ut.ParamInfo('window', 75),
-            ut.ParamInfo('version', 10),
+            ut.ParamInfo('version', 11),
         ]
 
 
@@ -1023,39 +1016,41 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
         >>> ut.show_if_requested()
     """
     print('Executing OC_WDTW')
-    spatial_weights = get_spatial_weights(
-        config['curv_length'], config['bernstein_coeffs']
-    )
     # Group pairs by qaid
     all_aids = np.unique(ut.flatten([qaid_list, daid_list]))
     all_curves = depc.get(
         'Oriented_Curvature', all_aids, 'curvature', config=config
     )
     # resample all curves to the same number of points
-    all_curves = [
-        resampleNd(curv) if curv.shape[0] != config['curv_length']else curv
-        for curv in all_curves
-    ]
-    aid_to_curves = dict(zip(all_aids, all_curves))
+    resampled_curves = []
+    for curv in all_curves:
+        if curv is None:
+            resampled_curves.append(None)
+        elif curv.shape[0] == config['curv_length']:
+            resampled_curves.append(curv)
+        else:
+	    resampled_curves.append(resampleNd(curv, config['curv_length']))
 
-    qcurvs_dcurvs = [
-        (aid_to_curves[qaid], aid_to_curves[daid]) for (qaid, daid)
-        in zip(qaid_list, daid_list)
-    ]
-    partial_dtw_weighted_euclidean = partial(
-        dtw_weighted_euclidean_star,
-        weights=spatial_weights, window=config['window']
+    assert len(all_curves) == len(resampled_curves), '%d != %d' % (len(all_curves), len(resampled_curves))
+
+    aid_to_curves = dict(zip(all_aids, resampled_curves))
+
+    assert len(qaid_list) == len(daid_list), '%d != %d' % (len(qaid_list), len(daid_list))
+
+    spatial_weights = get_spatial_weights(
+        config['curv_length'], config['bernstein_coeffs']
     )
-
-    try:
-        pool = mp.Pool(processes=32)
-        distances = pool.imap(partial_dtw_weighted_euclidean, qcurvs_dcurvs)
-    finally:
-        pool.close()
-        pool.join()
-
-    scores = [(np.exp(-distance / 50.),) for distance in distances]
-    return scores
+    window_size = config['window']
+    for qaid, daid in zip(qaid_list, daid_list):
+        qcurv, dcurv = aid_to_curves[qaid], aid_to_curves[daid]
+        if qcurv is None or dcurv is None:
+            yield None
+        else:
+            distance = dtw_weighted_euclidean(
+                qcurv, dcurv, spatial_weights, window_size
+            )
+            score = np.exp(-distance / 50.)
+            yield (score,)
 
 
 if __name__ == '__main__':

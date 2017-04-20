@@ -77,14 +77,6 @@ def reorient(points, theta, center):
     return points_trans
 
 
-def oriented_curvature_star(contour_radii):
-    contour, radii = contour_radii
-    if contour is None:
-        return None
-    else:
-        return oriented_curvature(contour, radii)
-
-
 def oriented_curvature(contour, radii):
     curvature = np.zeros((contour.shape[0], len(radii)), dtype=np.float32)
     # define the radii as a fraction of either the x or y extent
@@ -111,10 +103,6 @@ def oriented_curvature(contour, radii):
             curvature[i, j] = curv
 
     return curvature
-
-
-def dtw_weighted_euclidean_star(qcurv_dcurv, weights, window):
-    return dtw_weighted_euclidean(*qcurv_dcurv, weights=weights, window=window)
 
 
 def dtw_weighted_euclidean(qcurv, dcurv, weights, window):
