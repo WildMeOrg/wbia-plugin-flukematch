@@ -1029,7 +1029,7 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
         elif curv.shape[0] == config['curv_length']:
             resampled_curves.append(curv)
         else:
-	    resampled_curves.append(resampleNd(curv, config['curv_length']))
+            resampled_curves.append(resampleNd(curv, config['curv_length']))
 
     assert len(all_curves) == len(resampled_curves), '%d != %d' % (len(all_curves), len(resampled_curves))
 
