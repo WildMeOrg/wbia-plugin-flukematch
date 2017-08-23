@@ -40,8 +40,8 @@ import numpy as np
 import vtool as vt
 import cv2
 import math
-import multiprocessing as mp
-from functools import partial
+# import multiprocessing as mp
+# from functools import partial
 from os.path import join, exists
 from six.moves import zip, range, map
 from six.moves import cPickle as pickle  # NOQA
@@ -418,7 +418,8 @@ def preproc_cropped_chips(depc, cid_list, tipid_list, config=None):
             #chip_size = (new_x, new_y)
             try:
                 #print("[cropped-chips] %s: bbox: %r, l/n/r %r" % (path, bbox,tips))
-                chip_size = vt.get_scaled_size_with_width(new_x, bbox[2], bbox[3])
+                chip_size = vt.ScaleStrat.width(new_x, (bbox[2], bbox[3]))
+                # chip_size = vt.get_scaled_size_with_width(new_x, bbox[2], bbox[3])
             except OverflowError:
                 print("[cropped chip] WARNING: Probably got a bad keypoint prediction: bbox: %r" % (bbox,))
                 yield None
