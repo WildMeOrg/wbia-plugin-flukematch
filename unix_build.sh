@@ -37,10 +37,11 @@
 #    export NCPUS=$(grep -c ^processor /proc/cpuinfo)
 #    make -j$NCPUS ||  $FAILCMD
 #fi
-
+cd src/
 make
-cp -v flukematch_lib.so ibeis_flukematch
+cp -v flukematch_lib.so ../ibeis_flukematch
 make -f Makefile_OC_WDTW
-cp -v oc_wdtw.so ibeis_flukematch
+cp -v oc_wdtw.so ../ibeis_flukematch
+cd ../
 #cp -v libsver* ../vtool
 #cd ..
