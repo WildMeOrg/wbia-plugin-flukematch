@@ -47,7 +47,7 @@ from six.moves import zip, range, map
 from six.moves import cPickle as pickle  # NOQA
 from ibeis import constants as const
 #from collections import defaultdict
-from ibeis import register_preprocs
+from ibeis.control.controller_inject import register_preprocs
 from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          block_integral_curvatures_cpp,
                                          get_distance_curvweighted,
