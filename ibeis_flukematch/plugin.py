@@ -193,6 +193,7 @@ class NotchTipConfig(dtool.Config):
             #ut.ParamInfo('ntversion', 1)
             ut.ParamInfo('version', 4),
             ut.ParamInfo('kp_net', '128_decoupled'),
+            ut.ParamInfo('error_fallback', 'ignore', hideif='ignore'),
         ]
 
 
@@ -295,37 +296,46 @@ def preproc_notch_tips(depc, cid_list, config=None):
     for aid, imgn, M, size in ut.ProgIter(zip(aid_list, img_names, M_list, size_list),
                                           lbl='Reading Notch_Tips'):
         try:
-            # Need to scale notch tips as they are
-            # specified relative to the image, not the chip.
-            ptdict = img_points_map[imgn]
-            notch, left, right = ut.dict_take(ptdict, ['notch', 'left', 'right'])
+            try:
+                # Need to scale notch tips as they are
+                # specified relative to the image, not the chip.
+                ptdict = img_points_map[imgn]
+                notch, left, right = ut.dict_take(ptdict, ['notch', 'left', 'right'])
 
-            if config['manual_extract']:
-                notch_ = bound_point(M[0:2].T.dot(notch)[0:2], size)
-                left_  = bound_point(M[0:2].T.dot(left)[0:2], size)
-                right_ = bound_point(M[0:2].T.dot(right)[0:2], size)
+                if config['manual_extract']:
+                    notch_ = bound_point(M[0:2].T.dot(notch)[0:2], size)
+                    left_  = bound_point(M[0:2].T.dot(left)[0:2], size)
+                    right_ = bound_point(M[0:2].T.dot(right)[0:2], size)
+                else:
+                    notch_ = notch
+                    left_  = left
+                    right_ = right
+
+                # verify that the notch / left / right are within the bounds specified by size
+                assert(inbounds(size, notch_) and inbounds(size, left_) and inbounds(size, right_))
+                yield (notch_, left_, right_)
+            except KeyError:
+                print(
+                    '[fluke-module] ERROR: aid=%r does not have points associated' % (aid,))
+                # yield None
+                raise NotImplementedError(
+                    'ERROR: aid=%r does not have points associated' % (aid,))
+            except AssertionError:
+                print(
+                    '[fluke-module] ERROR: aid=%r has associated points that are out of bounds' % (aid,))
+                print(
+                    '[fluke-module] ERROR: Points: Notch: %s, Left: %s, Right: %s -- Chip Size: %s' % (notch_, left_, right_, size))
+                raise NotImplementedError(
+                    'ERROR: aid=%r has associated points that are out of bounds' % (aid,))
+        except Exception as ex:
+            if config['error_fallback'] in ['ignore']:
+                yield (
+                    np.array([size[0] // 2  ,  0], dtype=np.float64),
+                    np.array([0             ,  0], dtype=np.float64),
+                    np.array([size[0] - 1   ,  0], dtype=np.float64),
+                )
             else:
-                notch_ = notch
-                left_  = left
-                right_ = right
-
-            # verify that the notch / left / right are within the bounds specified by size
-            assert(inbounds(size, notch_) and inbounds(size, left_) and inbounds(size, right_))
-
-            yield (notch_, left_, right_)
-        except KeyError:
-            print(
-                '[fluke-module] ERROR: aid=%r does not have points associated' % (aid,))
-            # yield None
-            raise NotImplementedError(
-                'ERROR: aid=%r does not have points associated' % (aid,))
-        except AssertionError:
-            print(
-                '[fluke-module] ERROR: aid=%r has associated points that are out of bounds' % (aid,))
-            print(
-                '[fluke-module] ERROR: Points: Notch: %s, Left: %s, Right: %s -- Chip Size: %s' % (notch_, left_, right_, size))
-            raise NotImplementedError(
-                'ERROR: aid=%r has associated points that are out of bounds' % (aid,))
+                raise ex
 
 
 class CropChipConfig(dtool.Config):
