@@ -481,6 +481,7 @@ class TrailingEdgeConfig(dtool.Config):
 @register_preproc(
     'Trailing_Edge', ['Cropped_Chips'], ['edge', 'cost', 'te_score'],
     [np.ndarray, float, np.ndarray], configclass=TrailingEdgeConfig,
+    fname='trailing_edge',
     chunksize=256)
 def preproc_trailing_edge(depc, cpid_list, config=None):
     r"""
