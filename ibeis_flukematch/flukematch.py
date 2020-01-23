@@ -33,7 +33,7 @@ KP_NETWORK_OPTIONS = {
 
 def setup_kp_network(network_str):
     fn = KP_NETWORK_OPTIONS[network_str]['url']
-    file_url = join('https://cthulhu.dyn.wildme.io/public/models/', fn)
+    file_url = join('https://wildbookiarepository.blob.core.windows.net/models/', fn)
     network_params_path = ut.grab_file_url(file_url, appname='ibeis')
     network_params = ut.load_cPkl(network_params_path)
     # network_params also includes normalization constants needed for the dataset, and is assumed to be a dictionary
@@ -125,7 +125,7 @@ def make_acceptable_shape(acceptable_mult, shape):
 
 def setup_te_network(network_str):
     fn = TE_NETWORK_OPTIONS[network_str]['url']
-    file_url = join('https://cthulhu.dyn.wildme.io/public/models/', fn)
+    file_url = join('https://wildbookiarepository.blob.core.windows.net/models/', fn)
     network_params_path = ut.grab_file_url(file_url, appname='ibeis')
     network_params = ut.load_cPkl(network_params_path)
     # network_params also includes normalization constants needed for the dataset, and is assumed to be a dictionary
@@ -510,4 +510,3 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
     ut.doctest_funcs()
-
