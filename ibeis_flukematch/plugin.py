@@ -35,7 +35,7 @@ CommandLine:
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ibeis
 import utool as ut
-import dtool  # NOQA
+from ibeis import dtool  # NOQA
 import numpy as np
 import vtool as vt
 import cv2
