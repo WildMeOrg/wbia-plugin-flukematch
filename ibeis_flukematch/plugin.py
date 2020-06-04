@@ -33,9 +33,9 @@ CommandLine:
         ibeis -e rank_cmc --db humpbacks_fb -a default:mingt=2,qsize=10,dsize=100 default:qmingt=2,qsize=10,dsize=100 -t default:proot=BC_DTW,decision=max,crop_dim_size=500,crop_enabled=True,manual_extract=False,use_te_scorer=True,ignore_notch=True,te_score_weight=0.5 --show
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-import ibeis
+import wbia
 import utool as ut
-from ibeis import dtool  # NOQA
+from wbia import dtool  # NOQA
 import numpy as np
 import vtool as vt
 import cv2
@@ -45,9 +45,9 @@ import math
 from os.path import join, exists
 from six.moves import zip, range, map
 from six.moves import cPickle as pickle  # NOQA
-from ibeis import constants as const
+from wbia import constants as const
 #from collections import defaultdict
-from ibeis.control.controller_inject import register_preprocs
+from wbia.control.controller_inject import register_preprocs
 from ibeis_flukematch.flukematch import (find_trailing_edge_cpp,
                                          block_integral_curvatures_cpp,
                                          get_distance_curvweighted,
@@ -64,14 +64,14 @@ from ibeis_flukematch.curvrank import resampleNd
 
 register_preproc = register_preprocs['annot']
 
-ROOT = ibeis.const.ANNOTATION_TABLE
+ROOT = wbia.const.ANNOTATION_TABLE
 
 # register : name, parent(s), cols, dtypes
 
 
 def testdata_humpbacks():
-    import ibeis
-    ibs = ibeis.opendb(defaultdb='humpbacks')
+    import wbia
+    ibs = wbia.opendb(defaultdb='humpbacks')
     all_aids = ibs.get_valid_aids()
     isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag')
     aid_list = ut.compress(all_aids, isvalid)
@@ -97,7 +97,7 @@ def debug_depcache(ibs):
     Example:
         >>> # SCRIPT
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='PZ_MTEST')
+        >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> debug_depcache(ibs)
         >>> ut.show_if_requested()
     """
@@ -149,7 +149,7 @@ def preproc_has_tips(depc, aid_list, config=None):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> aid_list = ibs.get_valid_aids()
         >>> config = {}
         >>> propgen = preproc_has_tips(ibs.depc, aid_list, config)
@@ -228,7 +228,7 @@ def preproc_notch_tips(depc, cid_list, config=None):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag')
         >>> aid_list = ut.compress(all_aids, isvalid)
@@ -505,7 +505,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag')
         >>> aid_list = ut.compress(all_aids, isvalid)[0:10]
@@ -521,7 +521,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
         >>> ut.quit_if_noshow()
         >>> # Visualize
         >>> #aid_list = [2826]
-        >>> #chipcfg = ibeis.algo.preproc.preproc_chip.ChipConfig(dim_size=None)
+        >>> #chipcfg = wbia.algo.preproc.preproc_chip.ChipConfig(dim_size=None)
         >>> chips = depc.get('Cropped_Chips', aid_list, 'img', config=config, _debug=True)
         >>> notches = depc.get('Cropped_Chips', aid_list, ('notch', 'left', 'right'), config=config, _debug=True)
         >>> overlay_chips = [overlay_fluke_feats(chip, path, tips=tips) for chip, path, tips in zip(chips, tedge_list, notches)]
@@ -591,7 +591,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
 #    """
 #        >>> # DISABLE_DOCTEST
 #        >>> from ibeis_flukematch.plugin import *  # NOQA
-#        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+#        >>> ibs = wbia.opendb(defaultdb='humpbacks')
 #        >>> all_aids = ibs.get_valid_aids()
 #        >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
 #        >>> aid_list = ut.compress(all_aids, isvalid)[0:1]
@@ -652,7 +652,7 @@ def preproc_block_curvature(depc, te_rowids, config):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
         >>> aid_list = ut.compress(all_aids, isvalid)[0:4]
@@ -716,7 +716,7 @@ def preproc_oriented_curvature(depc, te_rowids, config):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
         >>> aid_list = ut.compress(all_aids, isvalid)[0:4]
@@ -784,7 +784,7 @@ def get_match_results(depc, qaid_list, daid_list, score_list, config):
         annot_scores = annot_scores.compress(is_valid)
 
         # Hacked in version of creating an annot match object
-        match_result = ibeis.AnnotMatch()
+        match_result = wbia.AnnotMatch()
         match_result.qaid = qaid
         match_result.qnid = qnid
         match_result.daid_list = daid_list_
@@ -902,10 +902,10 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> import itertools as it
         >>> # Setup Inputs
-        >>> ibs, aid_list = ibeis.testdata_aids(
+        >>> ibs, aid_list = wbia.testdata_aids(
         >>>     defaultdb='humpbacks', a='default:has_any=hasnotch,pername=2,mingt=2,size=10')
         >>> depc = ibs.depc
         >>> root_rowids = tuple(zip(*it.product(aid_list, aid_list)))
@@ -999,10 +999,10 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.plugin import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> import itertools as it
         >>> # Setup Inputs
-        >>> ibs, aid_list = ibeis.testdata_aids(
+        >>> ibs, aid_list = wbia.testdata_aids(
         >>>     defaultdb='humpbacks', a='default:has_any=hasnotch,pername=2,mingt=2,size=10')
         >>> depc = ibs.depc
         >>> root_rowids = tuple(zip(*it.product(aid_list, aid_list)))

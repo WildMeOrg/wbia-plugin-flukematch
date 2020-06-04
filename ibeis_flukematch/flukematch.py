@@ -445,9 +445,9 @@ def get_distance_curvweighted(query_curv, db_curv, curv_weights, window=50):
     Example:
         >>> # DISABLE_DOCTEST
         >>> from ibeis_flukematch.flukematch import *  # NOQA
-        >>> import ibeis
+        >>> import wbia
         >>> #from ibeis_flukematch.plugin import *  # NOQA
-        >>> ibs = ibeis.opendb(defaultdb='humpbacks')
+        >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get_property('Has_Notch', all_aids, 'flag', _debug=True)
         >>> aid = ut.compress(all_aids, isvalid)[0]
