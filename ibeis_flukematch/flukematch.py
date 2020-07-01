@@ -25,9 +25,21 @@ from itertools import chain
 import math
 
 KP_NETWORK_OPTIONS = {
-    '64_decoupled': {'url': 'kpext_64_decoupled.pkl', 'exp': build_kpextractor64_decoupled, 'size': (64, 64)},
-    '128_decoupled': {'url': 'kpext_128_decoupled.pkl', 'exp': build_kpextractor128_decoupled, 'size': (128, 128)},
-    '256_decoupled': {'url': 'kpext_256_decoupled.pkl', 'exp': build_kpextractor256_decoupled, 'size': (256, 256)},
+    '64_decoupled': {
+        'url': 'kpext_64_decoupled.pkl',
+        'exp': build_kpextractor64_decoupled,
+        'size': (64, 64),
+    },
+    '128_decoupled': {
+        'url': 'kpext_128_decoupled.pkl',
+        'exp': build_kpextractor128_decoupled,
+        'size': (128, 128),
+    },
+    '256_decoupled': {
+        'url': 'kpext_256_decoupled.pkl',
+        'exp': build_kpextractor256_decoupled,
+        'size': (256, 256),
+    },
 }
 
 
@@ -42,15 +54,18 @@ def setup_kp_network(network_str):
     ll.set_all_param_values(network_exp, network_params['params'])
     X = T.tensor4()
     network_fn = tfn([X], ll.get_output(network_exp, X, deterministic=True))
-    return {'mean': network_params['mean'], 'std': network_params['std'], 'networkfn': network_fn,
-            'input_size': KP_NETWORK_OPTIONS[network_str]['size']}
+    return {
+        'mean': network_params['mean'],
+        'std': network_params['std'],
+        'networkfn': network_fn,
+        'input_size': KP_NETWORK_OPTIONS[network_str]['size'],
+    }
 
 
 def bound_output(output, size_mat):
     # make sure the output doessn't exceed the boundaries of the image
     # if it does, snap it to the edge of each dimension it exceeds
-    bound_below = np.max(
-        np.stack([output, np.zeros(output.shape)], axis=2), axis=2)
+    bound_below = np.max(np.stack([output, np.zeros(output.shape)], axis=2), axis=2)
     bound_above = np.min(np.stack([bound_below, size_mat - 1], axis=2), axis=2)
     return bound_above
 
@@ -64,10 +79,11 @@ def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 12
     nbatches = int(math.ceil(len(img_paths) / batch_size))
     predictions = []
     for batch_ind in range(nbatches):
-        batch_slice = slice(batch_ind * batch_size,
-                            (batch_ind + 1) * batch_size)
-        print('[infer_kp] Batch %d/%d, processing %d images' %
-              (batch_ind, nbatches, len(img_paths[batch_slice])))
+        batch_slice = slice(batch_ind * batch_size, (batch_ind + 1) * batch_size)
+        print(
+            '[infer_kp] Batch %d/%d, processing %d images'
+            % (batch_ind, nbatches, len(img_paths[batch_slice]))
+        )
         batch_imgs = []
         batch_sizes = []
         for img_path in img_paths[batch_slice]:
@@ -87,9 +103,11 @@ def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 12
             size_mat = np.array([size] * 3, dtype=np.float32).reshape(3, 2)
             output = (output * size_mat).astype(np.int)
             output = bound_output(output, size_mat)
-            ptdict = {'left': output[0, :],
-                      'right': output[1, :],
-                      'notch': output[2, :], }
+            ptdict = {
+                'left': output[0, :],
+                'right': output[1, :],
+                'notch': output[2, :],
+            }
             batch_ptdicts.append(ptdict)
         predictions = chain(predictions, batch_ptdicts)
     predictions = list(predictions)
@@ -98,15 +116,24 @@ def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 12
 
 TE_NETWORK_OPTIONS = {
     'annot_simple': {'url': 'tescorer_annot_simple.pkl', 'exp': build_segmenter_simple},
-    'fbannot_simple': {'url': 'tescorer_fbannot_simple.pkl', 'exp': build_segmenter_simple},
-    'annot_upsample': {'url': 'tescorer_annot_upsample.pkl', 'exp': build_segmenter_upsample},
+    'fbannot_simple': {
+        'url': 'tescorer_fbannot_simple.pkl',
+        'exp': build_segmenter_simple,
+    },
+    'annot_upsample': {
+        'url': 'tescorer_annot_upsample.pkl',
+        'exp': build_segmenter_upsample,
+    },
     #'fbannot_upsample':{'url':'tescorer_fbannot_upsample.pkl', 'exp':build_segmenter_upsample},
     'annot_jet': {'url': 'tescorer_annot_jet.pkl', 'exp': build_segmenter_jet},
     'fbannot_jet': {'url': 'tescorer_fbannot_jet.pkl', 'exp': build_segmenter_jet},
     'annot_jet2': {'url': 'tescorer_annot_jet2.pkl', 'exp': build_segmenter_jet_2},
     'fbannot_jet2': {'url': 'tescorer_fbannot_jet2.pkl', 'exp': build_segmenter_jet_2},
     #'fbannot_jet_preconv':{'url':'tescorer_fbannot_jet_preconv.pkl', 'exp':build_segmenter_jet_preconv},
-    'annot_res': {'url': 'tescorer_annot_res.pkl', 'exp': build_segmenter_simple_absurd_res},
+    'annot_res': {
+        'url': 'tescorer_annot_res.pkl',
+        'exp': build_segmenter_simple_absurd_res,
+    },
 }
 
 
@@ -116,7 +143,7 @@ def make_acceptable_shape(acceptable_mult, shape):
         if shp % acceptable_mult != 0:
             rem = shp % acceptable_mult
             new_shp = shp - rem
-            assert(new_shp != 0 and new_shp % acceptable_mult == 0)
+            assert new_shp != 0 and new_shp % acceptable_mult == 0
             new_shape.append(new_shp)
         else:
             new_shape.append(shp)
@@ -133,10 +160,12 @@ def setup_te_network(network_str):
     network_exp = TE_NETWORK_OPTIONS[network_str]['exp']()
     ll.set_all_param_values(network_exp, network_params['params'])
     X = T.tensor4()
-    network_fn = tfn([X], ll.get_output(
-        network_exp[-1], X, deterministic=True))
-    retdict = {'mean': network_params['mean'], 'std': network_params[
-        'std'], 'networkfn': network_fn}
+    network_fn = tfn([X], ll.get_output(network_exp[-1], X, deterministic=True))
+    retdict = {
+        'mean': network_params['mean'],
+        'std': network_params['std'],
+        'networkfn': network_fn,
+    }
     if any([i in network_str for i in ('upsample', 'jet')]):
         retdict['mod_acc'] = 8
     return retdict
@@ -146,20 +175,25 @@ def safe_load(networkfn, img):
     try:
         return networkfn(img)
     except MemoryError:
-        print('[score_te] ERROR: GPU ran out of memory trying to process an image of size %r' % (
-            img.shape,))
+        print(
+            '[score_te] ERROR: GPU ran out of memory trying to process an image of size %r'
+            % (img.shape,)
+        )
         return None
 
 
-def score_te(img_paths, networkfn, mean, std, mod_acc=None, batch_size=32, input_size=None):
+def score_te(
+    img_paths, networkfn, mean, std, mod_acc=None, batch_size=32, input_size=None
+):
     # load up the images in batches
     nbatches = int(math.ceil(len(img_paths) / batch_size))
     predictions = []
     for batch_ind in range(nbatches):
-        batch_slice = slice(batch_ind * batch_size,
-                            (batch_ind + 1) * batch_size)
-        print('[score_te] Batch %d/%d, processing %d images' %
-              (batch_ind, nbatches, len(img_paths[batch_slice])))
+        batch_slice = slice(batch_ind * batch_size, (batch_ind + 1) * batch_size)
+        print(
+            '[score_te] Batch %d/%d, processing %d images'
+            % (batch_ind, nbatches, len(img_paths[batch_slice]))
+        )
         batch_imgs = []
         batch_sizes = []
         for img_path in img_paths[batch_slice]:
@@ -200,8 +234,9 @@ def score_te(img_paths, networkfn, mean, std, mod_acc=None, batch_size=32, input
             # FIXME: img is a list comprehension loop variable.
             # should it be used here?
             if label.shape[2:] != img.shape[1:]:
-                batch_outputs_r.append(cv2.resize(
-                    label[0][bg_ind], size, interpolation=cv2.INTER_LANCZOS4))
+                batch_outputs_r.append(
+                    cv2.resize(label[0][bg_ind], size, interpolation=cv2.INTER_LANCZOS4)
+                )
             else:
                 batch_outputs_r.append(label[0][bg_ind])
 
@@ -213,10 +248,9 @@ def score_te(img_paths, networkfn, mean, std, mod_acc=None, batch_size=32, input
 def find_trailing_edge(img, start, end, center=None, n_neighbors=3):
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    assert(n_neighbors % 2 == 1)
-    #n_neighbors = img.shape[0]
-    neighbor_range = list(range(-1 * (n_neighbors // 2),
-                                1 + (n_neighbors // 2)))
+    assert n_neighbors % 2 == 1
+    # n_neighbors = img.shape[0]
+    neighbor_range = list(range(-1 * (n_neighbors // 2), 1 + (n_neighbors // 2)))
     # start and end are x,y
     # take the vertical gradients of the image
     gradient_y_image = 1 * cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
@@ -245,9 +279,10 @@ def find_trailing_edge(img, start, end, center=None, n_neighbors=3):
     def get_cost(row, col, i):
         return (
             np.inf
-            if ((row + i < 0) or (row + i >= gradient_y_image.shape[0])) else
-            cost[row + i, col - 1] + gradient_y_image[row, col]
+            if ((row + i < 0) or (row + i >= gradient_y_image.shape[0]))
+            else cost[row + i, col - 1] + gradient_y_image[row, col]
         )
+
     for col in range(start[0], end[0] + 1):
         # this is the slow part
         for row in range(gradient_y_image.shape[0]):
@@ -260,7 +295,9 @@ def find_trailing_edge(img, start, end, center=None, n_neighbors=3):
             back[row, col] = best - (n_neighbors // 2)
             cost[row, col] = candidates[best]
     # backtrack the seam
-    path = []  # we know that the path is from end to start so we don't need to store the x values
+    path = (
+        []
+    )  # we know that the path is from end to start so we don't need to store the x values
     curr_y = end[1]
     path_cost = 0
     # we know that the optimal path must end at the end point since otherwise
@@ -283,15 +320,20 @@ except Exception as ex:
 
 
 if HAS_LIB:
-    ndmat_f_type = np.ctypeslib.ndpointer(
-        dtype=np.float32, ndim=2, flags='C_CONTIGUOUS')
-    ndmat_i_type = np.ctypeslib.ndpointer(
-        dtype=np.int32, ndim=2, flags='C_CONTIGUOUS')
+    ndmat_f_type = np.ctypeslib.ndpointer(dtype=np.float32, ndim=2, flags='C_CONTIGUOUS')
+    ndmat_i_type = np.ctypeslib.ndpointer(dtype=np.int32, ndim=2, flags='C_CONTIGUOUS')
 
     find_te = lib.find_trailing_edge
-    find_te.argtypes = [ndmat_f_type, ctypes.c_int, ctypes.c_int,  # image and size info
-                        ctypes.c_int, ctypes.c_int, ctypes.c_int,  # startcol, endrow, endcol
-                        ctypes.c_int, ndmat_i_type]  # number of neighbors, output path
+    find_te.argtypes = [
+        ndmat_f_type,
+        ctypes.c_int,
+        ctypes.c_int,  # image and size info
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,  # startcol, endrow, endcol
+        ctypes.c_int,
+        ndmat_i_type,
+    ]  # number of neighbors, output path
     find_te.restype = ctypes.c_float
 
 
@@ -300,12 +342,22 @@ def normalize_01(img):
     return norm_img
 
 
-def find_trailing_edge_cpp(img, start, end, center, n_neighbors=5, ignore_notch=False, score_mat=None,
-                           score_method='avg', score_weight=0.5, tol=None):
+def find_trailing_edge_cpp(
+    img,
+    start,
+    end,
+    center,
+    n_neighbors=5,
+    ignore_notch=False,
+    score_mat=None,
+    score_method='avg',
+    score_weight=0.5,
+    tol=None,
+):
     # points are x,y
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    assert(n_neighbors % 2 == 1)
+    assert n_neighbors % 2 == 1
     gradient_y_image = 1 * cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=5)
     # normalize so that all gradients lie in -1, 0
     norm_grad = normalize_01(gradient_y_image).astype(np.float32)
@@ -318,14 +370,13 @@ def find_trailing_edge_cpp(img, start, end, center, n_neighbors=5, ignore_notch=
     if score_mat is not None:
         score_mat = score_mat.astype(np.float32)
         try:
-            assert(score_mat.shape == norm_grad.shape)
+            assert score_mat.shape == norm_grad.shape
         except AssertionError:
             print(score_mat.shape)
             print(norm_grad.shape)
             raise
         if score_method == 'avg':
-            score_grad = score_weight * score_mat + \
-                (1 - score_weight) * norm_grad
+            score_grad = score_weight * score_mat + (1 - score_weight) * norm_grad
         elif score_method == 'allow':
             # basically make everything that isn't classified as being part of the trailing edge (using score_weight as the thresh)
             # into np.inf
@@ -347,9 +398,8 @@ def find_trailing_edge_cpp(img, start, end, center, n_neighbors=5, ignore_notch=
             thresholded_mat = np.copy(score_mat)
             thresholded_mat[np.where(score_mat < 0.5)] = 0
             thresholded_mat[np.where(score_mat > 0.5)] = 1
-            score_grad = score_weight * score_mat + \
-                (1 - score_weight) * norm_grad
-        #score_grad = np.average(np.stack([norm_grad, score_mat],axis=0),axis=0)
+            score_grad = score_weight * score_mat + (1 - score_weight) * norm_grad
+        # score_grad = np.average(np.stack([norm_grad, score_mat],axis=0),axis=0)
     else:
         score_grad = norm_grad
 
@@ -369,31 +419,45 @@ def find_trailing_edge_cpp(img, start, end, center, n_neighbors=5, ignore_notch=
             # we're then going to bound the trailing edge below and above these
             lowest_point = max(start[1], center[1], end[1])
             bound_low = min(
-                lowest_point + int(img.shape[0] * (tol / 100)) + 1, img.shape[0])
+                lowest_point + int(img.shape[0] * (tol / 100)) + 1, img.shape[0]
+            )
 
             highest_point = min(start[1], center[1], end[1])
-            bound_high = max(
-                highest_point - int(img.shape[0] * (tol / 100)) - 1, 0)
+            bound_high = max(highest_point - int(img.shape[0] * (tol / 100)) - 1, 0)
 
             score_grad[bound_low:, :] = 1 * np.inf
             score_grad[:bound_high, :] = 1 * np.inf
     except IndexError:
-        print('[find_te] Bad points: start: %s, end: %s, center: %s' %
-              (start, end, center))
+        print(
+            '[find_te] Bad points: start: %s, end: %s, center: %s' % (start, end, center)
+        )
         raise
 
     outpath = np.zeros((end[0] - start[0], 2), dtype=np.int32)
-    cost = find_te(score_grad, score_grad.shape[0],
-                   score_grad.shape[1], start[0], end[1], end[0],
-                   n_neighbors, outpath)
+    cost = find_te(
+        score_grad,
+        score_grad.shape[0],
+        score_grad.shape[1],
+        start[0],
+        end[1],
+        end[0],
+        n_neighbors,
+        outpath,
+    )
     return outpath, cost
+
 
 if HAS_LIB:
     block_curv = lib.block_curvature
-    block_curv.argtypes = [ndmat_f_type,  # summed_area_table,
-                           ctypes.c_int, ctypes.c_int,  # summed_area_table shape
-                           ndmat_i_type, ctypes.c_int,  # trailing edge and length
-                           ctypes.c_int, ndmat_f_type, ]  # size, output
+    block_curv.argtypes = [
+        ndmat_f_type,  # summed_area_table,
+        ctypes.c_int,
+        ctypes.c_int,  # summed_area_table shape
+        ndmat_i_type,
+        ctypes.c_int,  # trailing edge and length
+        ctypes.c_int,
+        ndmat_f_type,
+    ]  # size, output
 
 
 def block_integral_curvatures_cpp(sizes, coords):
@@ -404,11 +468,9 @@ def block_integral_curvatures_cpp(sizes, coords):
     coords = np.array(coords, dtype=np.int32)
     sizes = list(map(lambda x: int(math.ceil(coords.shape[0] * x)), sizes))
 
-    fit_size = (np.max(coords, axis=0) -
-                np.min(coords, axis=0)) + (max(sizes) + 1)
+    fit_size = (np.max(coords, axis=0) - np.min(coords, axis=0)) + (max(sizes) + 1)
     binarized = np.zeros(fit_size[::-1], dtype=np.float32)
-    fixed_coords = np.array(
-        (coords - np.min(coords, axis=0)) + max(sizes) // 2)[:, ::-1]
+    fixed_coords = np.array((coords - np.min(coords, axis=0)) + max(sizes) // 2)[:, ::-1]
     fixed_coords = np.ascontiguousarray(fixed_coords)
     binarized[list(zip(*fixed_coords))] = 1
     binarized = binarized.cumsum(axis=0)
@@ -416,24 +478,38 @@ def block_integral_curvatures_cpp(sizes, coords):
     summed_table = binarized.cumsum(axis=0).cumsum(axis=1)
     curvs = {}
 
-    #coords_flat = fixed_coords.flatten()
-    #sat_flat = summed_table.flatten()
+    # coords_flat = fixed_coords.flatten()
+    # sat_flat = summed_table.flatten()
     for size in sizes:
         # compute curvature using separate calls to block_curv for each
         curvs[size] = np.zeros((fixed_coords.shape[0], 1), dtype=np.float32)
-        block_curv(summed_table, summed_table.shape[0], summed_table.shape[1],
-                   fixed_coords, fixed_coords.shape[0], size, curvs[size])
+        block_curv(
+            summed_table,
+            summed_table.shape[0],
+            summed_table.shape[1],
+            fixed_coords,
+            fixed_coords.shape[0],
+            size,
+            curvs[size],
+        )
     # return curvs
 
     curv_arr = np.concatenate([curvs[size] for size in sizes], axis=1)
     return curv_arr
 
+
 if HAS_LIB:
     dtw_curvweighted = lib.dtw_curvweighted
-    dtw_curvweighted.argtypes = [ndmat_f_type, ndmat_f_type,  # curvatures
-                                 ctypes.c_int, ctypes.c_int,  # lengths
-                                 ctypes.c_int, ctypes.c_int,  # window, number of sizes
-                                 ndmat_f_type, ndmat_f_type]  # weights, output
+    dtw_curvweighted.argtypes = [
+        ndmat_f_type,
+        ndmat_f_type,  # curvatures
+        ctypes.c_int,
+        ctypes.c_int,  # lengths
+        ctypes.c_int,
+        ctypes.c_int,  # window, number of sizes
+        ndmat_f_type,
+        ndmat_f_type,
+    ]  # weights, output
 
 
 def get_distance_curvweighted(query_curv, db_curv, curv_weights, window=50):
@@ -463,7 +539,7 @@ def get_distance_curvweighted(query_curv, db_curv, curv_weights, window=50):
         >>> print(curve_arr.sum())
         >>> window=50
     """
-    #ordered_sizes = sorted(curv_weights.keys())
+    # ordered_sizes = sorted(curv_weights.keys())
     # we just need to stack the curvatures and make sure that the ordering is
     # consistent w/curv_weights
     # curv_weights_nd = np.array([curv_weights[i]
@@ -479,12 +555,19 @@ def get_distance_curvweighted(query_curv, db_curv, curv_weights, window=50):
 
     query_len = query_curv_nd.shape[0]
     db_len = db_curv_nd.shape[0]
-    #distance_mat = (np.zeros((query_len, db_len), dtype=np.float32) + np.inf)
+    # distance_mat = (np.zeros((query_len, db_len), dtype=np.float32) + np.inf)
     distance_mat = np.full((query_len, db_len), np.inf, dtype=np.float32)
     distance_mat[0, 0] = 0
     dtw_curvweighted(
-        query_curv_nd, db_curv_nd, query_len, db_len, window,
-        curv_weights_nd.shape[0], curv_weights_nd, distance_mat)
+        query_curv_nd,
+        db_curv_nd,
+        query_len,
+        db_len,
+        window,
+        curv_weights_nd.shape[0],
+        curv_weights_nd,
+        distance_mat,
+    )
     distance = distance_mat[-1, -1]
     return distance
 
@@ -500,6 +583,7 @@ def curv_weight_gen(rel_importance, sizes):
     weights = list(map(lambda x: x / sum(weights), weights))
     return weights
 
+
 if __name__ == '__main__':
     """
     CommandLine:
@@ -507,6 +591,8 @@ if __name__ == '__main__':
         python -m ibeis_flukematch.flukematch --allexamples
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

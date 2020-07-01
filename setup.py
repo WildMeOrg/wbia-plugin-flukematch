@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 from setuptools import setup
+
 try:
     from utool import util_setup
 except ImportError:
@@ -28,15 +29,15 @@ if __name__ == '__main__':
         long_description=util_setup.parse_readme('README.md'),
         ext_modules=util_setup.find_ext_modules(),
         cmdclass=util_setup.get_cmdclass(),
-        #description='description of module',
-        #url='https://github.com/<username>/ibeis-flukematch-module.git',
-        #author='<author>',
-        #author_email='<author_email>',
+        # description='description of module',
+        # url='https://github.com/<username>/ibeis-flukematch-module.git',
+        # author='<author>',
+        # author_email='<author_email>',
         keywords='',
         install_requires=INSTALL_REQUIRES,
         clutter_patterns=CLUTTER_PATTERNS,
-        #package_data={'build': ut.get_dynamic_lib_globstrs()},
-        #build_command=lambda: ut.std_build_command(dirname(__file__)),
+        # package_data={'build': ut.get_dynamic_lib_globstrs()},
+        # build_command=lambda: ut.std_build_command(dirname(__file__)),
         classifiers=[],
     )
     setup(**kwargs)
