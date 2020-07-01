@@ -38,9 +38,9 @@ extern "C" void dtw_curvweighted(float * seq1curvv, float * seq2curvv,
     float dist;
     for (int i = 1; i < seq1_len; i++) {
         for (int j = MAX(1, i - window); j < MIN(seq2_len, i + window); j++) {
-            dist = ((seq1curv.row(i).array() * curv_hist_weights.transpose().array()) - 
+            dist = ((seq1curv.row(i).array() * curv_hist_weights.transpose().array()) -
                     (seq2curv.row(j).array() * curv_hist_weights.transpose().array())).matrix().norm();
-            distmat_out(i,j) = dist + MIN(distmat_out(i, j-1), 
+            distmat_out(i,j) = dist + MIN(distmat_out(i, j-1),
                                         MIN(distmat_out(i-1, j),
                                             distmat_out(i-1, j-1)));
         }
@@ -48,7 +48,7 @@ extern "C" void dtw_curvweighted(float * seq1curvv, float * seq2curvv,
 }
 
 extern "C" void block_curvature(float * summed_area_tabv, int binarized_rows, int binarized_cols,
-                                int * seq_posv, int seq_len, 
+                                int * seq_posv, int seq_len,
                                 int curvature_size, float * curvature_vecv) {
 
     ExternNDArrayf summed_area_tab((float*)summed_area_tabv, binarized_rows, binarized_cols);
@@ -70,7 +70,7 @@ extern "C" void block_curvature(float * summed_area_tabv, int binarized_rows, in
                             (summed_area_tab(starti, endj) + summed_area_tab(endi, startj)));
         this_summed_area /= area; // may be a little wrong on the edges, but we shouldn't need to worry about that
         //printf("Point (%d, %d) has curvature %0.2f at size %d\n", i, j, this_summed_area, curvature_size);
-        curvature_vec(ind) = this_summed_area; 
+        curvature_vec(ind) = this_summed_area;
     }
 }
 
@@ -100,7 +100,7 @@ extern "C" float find_trailing_edge(float * gradient_imgv, int gradient_rows, in
     }
     MatrixXf cost = MatrixXf::Zero(gradient_rows, gradient_cols);
     MatrixXi back = MatrixXi::Zero(gradient_rows, gradient_cols);
-    
+
     //printf("Looping over image\n");
     for (int col = startcol; col <= endcol; col++) {
         for (int row = 0; row < gradient_rows; row++) {
@@ -120,13 +120,13 @@ extern "C" float find_trailing_edge(float * gradient_imgv, int gradient_rows, in
         }
     }
     // Now determine the optimal path from the endrow, endcol position
-    // We'll store the result in outpath -- since we know how that the path is constructed 
+    // We'll store the result in outpath -- since we know how that the path is constructed
     // One column at a time, we know how big the path will be ahead of time, which is very helpful
     int curr_row = endrow;
     float total_cost = 0;
     //printf("Reconstructing the optimal path\n");
     //printf("Cost sum %0.2f", cost.sum());
-    for (struct {int ind; int col;} P = {0, endcol}; 
+    for (struct {int ind; int col;} P = {0, endcol};
          P.col > startcol; P.col--, P.ind++) {
         total_cost += cost(curr_row, P.col);
         //printf("Original cost at (%d, %d): %0.2f\n", P.col, curr_row, cost(curr_row, P.col));
