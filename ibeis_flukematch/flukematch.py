@@ -66,7 +66,7 @@ def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 12
     for batch_ind in range(nbatches):
         batch_slice = slice(batch_ind * batch_size,
                             (batch_ind + 1) * batch_size)
-        print("[infer_kp] Batch %d/%d, processing %d images" %
+        print('[infer_kp] Batch %d/%d, processing %d images' %
               (batch_ind, nbatches, len(img_paths[batch_slice])))
         batch_imgs = []
         batch_sizes = []
@@ -146,7 +146,7 @@ def safe_load(networkfn, img):
     try:
         return networkfn(img)
     except MemoryError:
-        print("[score_te] ERROR: GPU ran out of memory trying to process an image of size %r" % (
+        print('[score_te] ERROR: GPU ran out of memory trying to process an image of size %r' % (
             img.shape,))
         return None
 
@@ -158,7 +158,7 @@ def score_te(img_paths, networkfn, mean, std, mod_acc=None, batch_size=32, input
     for batch_ind in range(nbatches):
         batch_slice = slice(batch_ind * batch_size,
                             (batch_ind + 1) * batch_size)
-        print("[score_te] Batch %d/%d, processing %d images" %
+        print('[score_te] Batch %d/%d, processing %d images' %
               (batch_ind, nbatches, len(img_paths[batch_slice])))
         batch_imgs = []
         batch_sizes = []
@@ -378,7 +378,7 @@ def find_trailing_edge_cpp(img, start, end, center, n_neighbors=5, ignore_notch=
             score_grad[bound_low:, :] = 1 * np.inf
             score_grad[:bound_high, :] = 1 * np.inf
     except IndexError:
-        print("[find_te] Bad points: start: %s, end: %s, center: %s" %
+        print('[find_te] Bad points: start: %s, end: %s, center: %s' %
               (start, end, center))
         raise
 

@@ -431,7 +431,7 @@ def preproc_cropped_chips(depc, cid_list, tipid_list, config=None):
                 chip_size = vt.ScaleStrat.width(new_x, (bbox[2], bbox[3]))
                 # chip_size = vt.get_scaled_size_with_width(new_x, bbox[2], bbox[3])
             except OverflowError:
-                print("[cropped chip] WARNING: Probably got a bad keypoint prediction: bbox: %r" % (bbox,))
+                print('[cropped chip] WARNING: Probably got a bad keypoint prediction: bbox: %r' % (bbox,))
                 yield None
         M = vt.get_image_to_chip_transform(bbox, chip_size, 0)
         with ut.embed_on_exception_context:
@@ -583,7 +583,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
             yield (tedge, cost, score_pred)
         except IndexError as ie:
             print(ie)
-            print("Bad points for %s: %r" % (img_path, point_set))
+            print('Bad points for %s: %r' % (img_path, point_set))
             yield None
 
 
