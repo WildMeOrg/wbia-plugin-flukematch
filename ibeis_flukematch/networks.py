@@ -502,5 +502,3 @@ def build_segmenter_simple_absurd_res():
     softmax = Softmax4D(conv_final, name='4dsoftmax')
 
     return [softmax]
-
-
