@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import ctypes
 import numpy as np
 from scipy.interpolate import BPoly

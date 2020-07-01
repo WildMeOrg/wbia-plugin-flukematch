@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import lasagne.layers as ll
 from lasagne.nonlinearities import linear, softmax, sigmoid, rectify
 from lasagne.objectives import binary_crossentropy
