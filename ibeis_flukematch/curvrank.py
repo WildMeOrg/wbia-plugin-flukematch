@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import ctypes
 import numpy as np
 from scipy.interpolate import BPoly
@@ -7,16 +8,18 @@ from os.path import dirname, join
 costs_lib_fpath = join(dirname(__file__), 'oc_wdtw.so')
 costs_lib = ctypes.cdll.LoadLibrary(costs_lib_fpath)
 
-ndmat_f_type = np.ctypeslib.ndpointer(
-    dtype=np.float32, ndim=2, flags='C_CONTIGUOUS')
-ndmat_i_type = np.ctypeslib.ndpointer(
-    dtype=np.int32, ndim=2, flags='C_CONTIGUOUS')
+ndmat_f_type = np.ctypeslib.ndpointer(dtype=np.float32, ndim=2, flags='C_CONTIGUOUS')
+ndmat_i_type = np.ctypeslib.ndpointer(dtype=np.int32, ndim=2, flags='C_CONTIGUOUS')
 
 dtw_weighted_euclidean_cpp = costs_lib.weighted_euclidean
 dtw_weighted_euclidean_cpp.argtypes = [
-    ndmat_f_type, ndmat_f_type, ndmat_f_type,
-    ctypes.c_int, ctypes.c_int, ctypes.c_int,
-    ndmat_f_type
+    ndmat_f_type,
+    ndmat_f_type,
+    ndmat_f_type,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_int,
+    ndmat_f_type,
 ]
 
 
@@ -47,9 +50,7 @@ def bernstein_poly(x, coeffs):
 
 def get_spatial_weights(num_points, coeffs):
     coeffs = coeffs.reshape(coeffs.shape[0], 1)
-    weights = bernstein_poly(
-        np.linspace(0, 1, num_points), coeffs
-    )
+    weights = bernstein_poly(np.linspace(0, 1, num_points), coeffs)
     weights = weights.reshape(-1, 1).astype(np.float32)
 
     return weights
@@ -71,8 +72,7 @@ def reorient(points, theta, center):
     points_trans = points_trans.transpose()[:, :2]
     points_trans += center
 
-    assert points_trans.ndim == 2, 'points_trans.ndim == %d != 2' % (
-        points_trans.ndim)
+    assert points_trans.ndim == 2, 'points_trans.ndim == %d != 2' % (points_trans.ndim)
 
     return points_trans
 
@@ -118,10 +118,7 @@ def dtw_weighted_euclidean(qcurv, dcurv, weights, window):
 
     m, n = qcurv.shape
     costs_out = np.full((m, m), np.inf, dtype=np.float32)
-    costs_out[0, 0] = 0.
-    dtw_weighted_euclidean_cpp(
-        qcurv, dcurv, weights, m, n, window,
-        costs_out
-    )
+    costs_out[0, 0] = 0.0
+    dtw_weighted_euclidean_cpp(qcurv, dcurv, weights, m, n, window, costs_out)
 
     return costs_out[-1, -1]
