@@ -10,12 +10,6 @@ except ImportError:
     print('ERROR: setup requires utool')
     raise
 
-INSTALL_REQUIRES = [
-    #'cython >= 0.21.1',
-    #'numpy >= 1.9.0',
-    #'scipy >= 0.16.0',
-]
-
 CLUTTER_PATTERNS = [
     # Patterns removed by python setup.py clean
 ]
@@ -101,6 +95,12 @@ def parse_requirements(fname='requirements.txt', with_version=False):
 
 
 if __name__ == '__main__':
+    install_requires = parse_requirements('requirements/runtime.txt')
+    extras_require = {
+        'all': parse_requirements('requirements.txt'),
+        'runtime': parse_requirements('requirements/runtime.txt'),
+        'build': parse_requirements('requirements/build.txt'),
+    }
     kwargs = util_setup.setuptools_setup(
         setup_fpath=__file__,
         name='ibeis_flukematch',
@@ -115,7 +115,8 @@ if __name__ == '__main__':
         # author='<author>',
         # author_email='<author_email>',
         keywords='',
-        install_requires=INSTALL_REQUIRES,
+        install_requires=install_requires,
+        extras_require=extras_require,
         clutter_patterns=CLUTTER_PATTERNS,
         # package_data={'build': ut.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),
