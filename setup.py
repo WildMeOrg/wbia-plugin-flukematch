@@ -103,9 +103,9 @@ if __name__ == '__main__':
     }
     kwargs = util_setup.setuptools_setup(
         setup_fpath=__file__,
-        name='ibeis_flukematch',
+        name='wbia_flukematch',
         packages=util_setup.find_packages(),
-        version=util_setup.parse_package_for_version('ibeis_flukematch'),
+        version=util_setup.parse_package_for_version('wbia_flukematch'),
         license=util_setup.read_license('LICENSE'),
         long_description=util_setup.parse_readme('README.md'),
         ext_modules=util_setup.find_ext_modules(),

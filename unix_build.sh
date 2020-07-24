@@ -39,9 +39,9 @@
 #fi
 cd src/
 make
-cp -v flukematch_lib.so ../ibeis_flukematch
+cp -v flukematch_lib.so ../wbia_flukematch
 make -f Makefile_OC_WDTW
-cp -v oc_wdtw.so ../ibeis_flukematch
+cp -v oc_wdtw.so ../wbia_flukematch
 cd ../
 pip install -e .
 #cp -v libsver* ../vtool
