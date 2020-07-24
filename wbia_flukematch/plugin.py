@@ -50,7 +50,7 @@ from wbia import constants as const
 
 # from collections import defaultdict
 from wbia.control.controller_inject import register_preprocs
-from ibeis_flukematch.flukematch import (
+from wbia_flukematch.flukematch import (
     find_trailing_edge_cpp,
     block_integral_curvatures_cpp,
     get_distance_curvweighted,
@@ -60,10 +60,10 @@ from ibeis_flukematch.flukematch import (
     score_te,
     curv_weight_gen,
 )
-from ibeis_flukematch.curvrank import oriented_curvature
-from ibeis_flukematch.curvrank import dtw_weighted_euclidean
-from ibeis_flukematch.curvrank import get_spatial_weights
-from ibeis_flukematch.curvrank import resampleNd
+from wbia_flukematch.curvrank import oriented_curvature
+from wbia_flukematch.curvrank import dtw_weighted_euclidean
+from wbia_flukematch.curvrank import get_spatial_weights
+from wbia_flukematch.curvrank import resampleNd
 
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
 
@@ -97,16 +97,16 @@ def bound_point(point, size):
 def debug_depcache(ibs):
     r"""
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-debug_depcache
-        python -m ibeis_flukematch.plugin --exec-debug_depcache --show --no-cnn
-        python -m ibeis_flukematch.plugin --exec-debug_depcache --clear-all-depcache --db humbpacks
-        python -m ibeis_flukematch.plugin --exec-debug_depcache --show --no-cnn --db humpbacks
+        python -m wbia_flukematch.plugin --exec-debug_depcache
+        python -m wbia_flukematch.plugin --exec-debug_depcache --show --no-cnn
+        python -m wbia_flukematch.plugin --exec-debug_depcache --clear-all-depcache --db humbpacks
+        python -m wbia_flukematch.plugin --exec-debug_depcache --show --no-cnn --db humpbacks
 
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --show
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --show
 
     Example:
         >>> # SCRIPT
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='PZ_MTEST')
         >>> debug_depcache(ibs)
         >>> ut.show_if_requested()
@@ -150,15 +150,15 @@ def preproc_has_tips(depc, aid_list, config=None):
         tuple: (np.ndarray, np.ndarray, np.ndarray)
 
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_has_tips --db testdb1
-        python -m ibeis_flukematch.plugin --exec-preproc_has_tips --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
-        python -m ibeis_flukematch.plugin --exec-preproc_has_tips --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn --clear-all-depcache
-        python -m ibeis_flukematch.plugin --exec-preproc_has_tips --db humpbacks --no-cnn
-        python -m ibeis_flukematch.plugin --exec-preproc_has_tips --db humpbacks --no-cnn --clear-all-depcache
+        python -m wbia_flukematch.plugin --exec-preproc_has_tips --db testdb1
+        python -m wbia_flukematch.plugin --exec-preproc_has_tips --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_has_tips --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn --clear-all-depcache
+        python -m wbia_flukematch.plugin --exec-preproc_has_tips --db humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_has_tips --db humpbacks --no-cnn --clear-all-depcache
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> aid_list = ibs.get_valid_aids()
         >>> config = {}
@@ -238,15 +238,15 @@ def preproc_notch_tips(depc, cid_list, config=None):
         tuple: (np.ndarray, np.ndarray, np.ndarray)
 
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --show
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --show --manual_extract=False
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --show --manual_extract=True
-        python -m ibeis_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --clear-all-depcache
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --show
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --show --manual_extract=False
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --show --manual_extract=True
+        python -m wbia_flukematch.plugin --exec-preproc_notch_tips --db humpbacks --no-cnn --clear-all-depcache
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag')
@@ -410,11 +410,11 @@ class CropChipConfig(dtool.Config):
 def preproc_cropped_chips(depc, cid_list, tipid_list, config=None):
     """
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_cropped_chips --show
+        python -m wbia_flukematch.plugin --exec-preproc_cropped_chips --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs, aid_list = testdata_humpbacks()
         >>> config = CropChipConfig(crop_enabled=True)
         >>> cid_list = ibs.depc.get_rowids('chips', aid_list, config)
@@ -564,17 +564,17 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
         tuple: (tedge, cost)
 
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --show
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn --clear-all-depcache
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn --clear-all-depcache
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --show
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn --clear-all-depcache
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn --clear-all-depcache
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn
 
-        python -m ibeis_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn --show
+        python -m wbia_flukematch.plugin --exec-preproc_trailing_edge --db humpbacks --no-cnn --show
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag')
@@ -676,7 +676,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
 # def preproc_binarized(coords, sizes):
 #    """
 #        >>> # DISABLE_DOCTEST
-#        >>> from ibeis_flukematch.plugin import *  # NOQA
+#        >>> from wbia_flukematch.plugin import *  # NOQA
 #        >>> ibs = wbia.opendb(defaultdb='humpbacks')
 #        >>> all_aids = ibs.get_valid_aids()
 #        >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
@@ -701,7 +701,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
 #    """
 #    size = 10
 #    """
-#    from ibeis_flukematch import flukematch
+#    from wbia_flukematch import flukematch
 #    size = config['size']
 #    curv = np.zeros((fixed_coords.shape[0], 1), dtype=np.float32)
 #    flukematch.block_curv(summed_table, summed_table.shape[0],
@@ -739,12 +739,12 @@ def preproc_block_curvature(depc, te_rowids, config):
         list: [np.ndarray]
 
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_block_curvature --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
-        python -m ibeis_flukematch.plugin --exec-preproc_block_curvature --db humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_block_curvature --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_block_curvature --db humpbacks --no-cnn
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
@@ -811,12 +811,12 @@ def preproc_oriented_curvature(depc, te_rowids, config):
         list: [np.ndarray]
 
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-preproc_oriented_curvature --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
-        python -m ibeis_flukematch.plugin --exec-preproc_oriented_curvature --db humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_oriented_curvature --dbdir /home/zach/data/IBEIS/humpbacks --no-cnn
+        python -m wbia_flukematch.plugin --exec-preproc_oriented_curvature --db humpbacks --no-cnn
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get('Has_Notch', all_aids, 'flag', _debug=True)
@@ -902,14 +902,14 @@ def get_match_results(depc, qaid_list, daid_list, score_list, config):
 class BC_DTW_Config(dtool.Config):
     """
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-BC_DTW_Config --show
+        python -m wbia_flukematch.plugin --exec-BC_DTW_Config --show
 
     IPython:
-        ut.execute_doctest('BC_DTW_Config', module='ibeis_flukematch.plugin')
+        ut.execute_doctest('BC_DTW_Config', module='wbia_flukematch.plugin')
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> config = BC_DTW_Config()
         >>> result = config.get_cfgstr()
         >>> print(result)
@@ -1003,7 +1003,7 @@ class BC_DTW_Request(dtool.base.VsOneSimilarityRequest):
 def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
     r"""
     CommandLine:
-        python -m ibeis_flukematch.plugin --exec-id_algo_bc_dtw:0 --show
+        python -m wbia_flukematch.plugin --exec-id_algo_bc_dtw:0 --show
 
         # IBEIS Experiments
         ibeis -e draw_cases --db humpbacks --show \
@@ -1012,7 +1012,7 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> import wbia
         >>> import itertools as it
         >>> # Setup Inputs
@@ -1130,7 +1130,7 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
     r"""
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.plugin import *  # NOQA
+        >>> from wbia_flukematch.plugin import *  # NOQA
         >>> import wbia
         >>> import itertools as it
         >>> # Setup Inputs
@@ -1199,8 +1199,8 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
 if __name__ == '__main__':
     r"""
     CommandLine:
-        python -m ibeis_flukematch.plugin
-        python -m ibeis_flukematch.plugin --allexamples
+        python -m wbia_flukematch.plugin
+        python -m wbia_flukematch.plugin --allexamples
         ibeis -e draw_cases --db humpbacks --show \
            -a default:has_any=hasnotch,mingt=2,size=50 \
            -t default:proot=BC_DTW -f :fail=False,index=0:3,sortdsc=gtscore,max_pername=1

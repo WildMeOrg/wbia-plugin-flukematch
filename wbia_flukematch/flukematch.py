@@ -5,7 +5,7 @@ import numpy as np
 import ctypes
 from os.path import dirname, join
 from six.moves import zip, map, range
-from ibeis_flukematch.networks import (
+from wbia_flukematch.networks import (
     # tescorers
     build_segmenter_simple,
     build_segmenter_upsample,
@@ -72,7 +72,7 @@ def bound_output(output, size_mat):
 
 def infer_kp(img_paths, networkfn, mean, std, batch_size=32, input_size=(128, 128)):
     """
-    >>> from ibeis_flukematch.flukematch import *
+    >>> from wbia_flukematch.flukematch import *
     >>> pt.imshow(overlay_fluke_feats((img[0] * std + mean), tips=batch_outputs[0] * 128))
     """
     # load up the images in batches
@@ -462,7 +462,7 @@ if HAS_LIB:
 
 def block_integral_curvatures_cpp(sizes, coords):
     """
-        >>> from ibeis_flukematch.flukematch import *  # NOQA
+        >>> from wbia_flukematch.flukematch import *  # NOQA
     """
     # assume coords are in x, y
     coords = np.array(coords, dtype=np.int32)
@@ -520,9 +520,9 @@ def get_distance_curvweighted(query_curv, db_curv, curv_weights, window=50):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from ibeis_flukematch.flukematch import *  # NOQA
+        >>> from wbia_flukematch.flukematch import *  # NOQA
         >>> import wbia
-        >>> #from ibeis_flukematch.plugin import *  # NOQA
+        >>> #from wbia_flukematch.plugin import *  # NOQA
         >>> ibs = wbia.opendb(defaultdb='humpbacks')
         >>> all_aids = ibs.get_valid_aids()
         >>> isvalid = ibs.depc.get_property('Has_Notch', all_aids, 'flag', _debug=True)
@@ -587,8 +587,8 @@ def curv_weight_gen(rel_importance, sizes):
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m ibeis_flukematch.flukematch
-        python -m ibeis_flukematch.flukematch --allexamples
+        python -m wbia_flukematch.flukematch
+        python -m wbia_flukematch.flukematch --allexamples
     """
     import multiprocessing
 
