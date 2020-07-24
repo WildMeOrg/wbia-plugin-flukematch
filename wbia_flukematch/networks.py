@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 import lasagne.layers as ll
-from lasagne.nonlinearities import linear, softmax, sigmoid, rectify
-from lasagne.objectives import binary_crossentropy
-from lasagne.updates import adam, nesterov_momentum
-from lasagne.init import Orthogonal, Constant
-from lasagne.regularization import l2, regularize_network_params
+from lasagne.nonlinearities import linear, rectify
+from lasagne.init import Orthogonal
 import theano.tensor as T
-import theano
 import sys
 
 
@@ -18,7 +14,10 @@ def build_kpextractor64():
     # we're going to build something like what Daniel Nouri made for Facial Keypoint detection for a base reference
     # http://danielnouri.org/notes/2014/12/17/using-convolutional-neural-nets-to-detect-facial-keypoints-tutorial/
     # alternate pooling and conv layers to minimize parameters
-    filter_pad = lambda x, y: (x // 2, y // 2)
+
+    def filter_pad(x, y):
+        return (x // 2, y // 2)
+
     filter3 = (3, 3)
     same_pad3 = filter_pad(*filter3)
     conv1 = ll.Conv2DLayer(
@@ -93,7 +92,10 @@ def build_kpextractor64():
 def build_kpextractor128():
     inp = ll.InputLayer(shape=(None, 1, 128, 128), name='input')
     # alternate pooling and conv layers to minimize parameters
-    filter_pad = lambda x, y: (x // 2, y // 2)
+
+    def filter_pad(x, y):
+        return (x // 2, y // 2)
+
     filter3 = (3, 3)
     same_pad3 = filter_pad(*filter3)
     conv1 = ll.Conv2DLayer(
@@ -180,7 +182,10 @@ def build_kpextractor128():
 def build_kpextractor64_decoupled():
     inp = ll.InputLayer(shape=(None, 1, 64, 64), name='input')
     # alternate pooling and conv layers to minimize parameters
-    filter_pad = lambda x, y: (x // 2, y // 2)
+
+    def filter_pad(x, y):
+        return (x // 2, y // 2)
+
     filter3 = (3, 3)
     same_pad3 = filter_pad(*filter3)
     conv1 = ll.Conv2DLayer(
@@ -264,7 +269,10 @@ def build_kpextractor64_decoupled():
 def build_kpextractor128_decoupled():
     inp = ll.InputLayer(shape=(None, 1, 128, 128), name='input')
     # alternate pooling and conv layers to minimize parameters
-    filter_pad = lambda x, y: (x // 2, y // 2)
+
+    def filter_pad(x, y):
+        return (x // 2, y // 2)
+
     filter3 = (3, 3)
     same_pad3 = filter_pad(*filter3)
     conv1 = ll.Conv2DLayer(
@@ -363,7 +371,10 @@ def build_kpextractor128_decoupled():
 def build_kpextractor256_decoupled():
     inp = ll.InputLayer(shape=(None, 1, 256, 256), name='input')
     # alternate pooling and conv layers to minimize parameters
-    filter_pad = lambda x, y: (x // 2, y // 2)
+
+    def filter_pad(x, y):
+        return (x // 2, y // 2)
+
     filter3 = (3, 3)
     same_pad3 = filter_pad(*filter3)
     conv1 = ll.Conv2DLayer(
@@ -750,7 +761,7 @@ def build_segmenter_jet():
     )
     # f 68 s 8
     # now start the upsample
-    ## FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
+    # FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
     conv_f8 = ll.Conv2DLayer(
         conv8,
         num_filters=2,
@@ -765,7 +776,7 @@ def build_segmenter_jet():
         softmax_8, 8, name='upsample_8x'
     )  # take loss here, 8x upsample from 8x downsample
 
-    ## COMBINE BY UPSAMPLING SOFTMAX 8 AND PRED ON CONV 6
+    # COMBINE BY UPSAMPLING SOFTMAX 8 AND PRED ON CONV 6
     softmax_4up = ll.Upscale2DLayer(softmax_8, 2, name='upsample_4x_pre')  # 4x downsample
     conv_f6 = ll.Conv2DLayer(
         conv6,
@@ -785,7 +796,7 @@ def build_segmenter_jet():
         softmax_4_merge, 4, name='upsample_4x'
     )  # take loss here, 4x upsample from 4x downsample
 
-    ## COMBINE BY UPSAMPLING SOFTMAX_4_MERGE AND CONV 4
+    # COMBINE BY UPSAMPLING SOFTMAX_4_MERGE AND CONV 4
     softmax_2up = ll.Upscale2DLayer(
         softmax_4_merge, 2, name='upsample_2x_pre'
     )  # 2x downsample
@@ -901,7 +912,7 @@ def build_segmenter_jet_2():
     bn8 = ll.BatchNormLayer(conv8, name='bn8')
     # f 68 s 8
     # now start the upsample
-    ## FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
+    # FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
     conv_f8 = ll.Conv2DLayer(
         bn8,
         num_filters=2,
@@ -916,7 +927,7 @@ def build_segmenter_jet_2():
         softmax_8, 8, name='upsample_8x'
     )  # take loss here, 8x upsample from 8x downsample
 
-    ## COMBINE BY UPSAMPLING SOFTMAX 8 AND PRED ON CONV 6
+    # COMBINE BY UPSAMPLING SOFTMAX 8 AND PRED ON CONV 6
     softmax_4up = ll.Upscale2DLayer(softmax_8, 2, name='upsample_4x_pre')  # 4x downsample
     conv_f6 = ll.Conv2DLayer(
         bn6,
@@ -936,7 +947,7 @@ def build_segmenter_jet_2():
         softmax_4_merge, 4, name='upsample_4x'
     )  # take loss here, 4x upsample from 4x downsample
 
-    ## COMBINE BY UPSAMPLING SOFTMAX_4_MERGE AND CONV 4
+    # COMBINE BY UPSAMPLING SOFTMAX_4_MERGE AND CONV 4
     softmax_2up = ll.Upscale2DLayer(
         softmax_4_merge, 2, name='upsample_2x_pre'
     )  # 2x downsample
@@ -959,7 +970,7 @@ def build_segmenter_jet_2():
         softmax_2_merge, 2, name='upsample_2x'
     )  # final loss here, 2x upsample from a 2x downsample
 
-    ## COMBINE BY UPSAMPLING SOFTMAX_2_MERGE AND CONV 2
+    # COMBINE BY UPSAMPLING SOFTMAX_2_MERGE AND CONV 2
     softmax_1up = ll.Upscale2DLayer(
         softmax_2_merge, 2, name='upsample_1x_pre'
     )  # 1x downsample (i.e. no downsample)
@@ -1003,7 +1014,7 @@ def build_segmenter_jet_preconv():
         nonlinearity=rectify,
         name='conv1_1',
     )
-    bn1 = ll.BatchNormLayer(conv1, name='bn1')
+    ll.BatchNormLayer(conv1, name='bn1')
     conv2 = ll.Conv2DLayer(
         conv1,
         num_filters=64,
@@ -1024,7 +1035,7 @@ def build_segmenter_jet_preconv():
         nonlinearity=rectify,
         name='conv2_1',
     )
-    bn3 = ll.BatchNormLayer(conv3, name='bn3')
+    ll.BatchNormLayer(conv3, name='bn3')
     conv4 = ll.Conv2DLayer(
         conv3,
         num_filters=128,
@@ -1045,7 +1056,7 @@ def build_segmenter_jet_preconv():
         nonlinearity=rectify,
         name='conv3_1',
     )
-    bn5 = ll.BatchNormLayer(conv5, name='bn5')
+    ll.BatchNormLayer(conv5, name='bn5')
     conv6 = ll.Conv2DLayer(
         conv5,
         num_filters=128,
@@ -1066,7 +1077,7 @@ def build_segmenter_jet_preconv():
         nonlinearity=rectify,
         name='conv4_1',
     )
-    bn7 = ll.BatchNormLayer(conv7, name='bn7')
+    ll.BatchNormLayer(conv7, name='bn7')
     conv8 = ll.Conv2DLayer(
         conv7,
         num_filters=128,
@@ -1079,7 +1090,7 @@ def build_segmenter_jet_preconv():
     bn8 = ll.BatchNormLayer(conv8, name='bn8')
     # f 68 s 8
     # now start the upsample
-    ## FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
+    # FIRST UPSAMPLE PREDICTION (akin to FCN-32s)
 
     up8 = ll.Upscale2DLayer(
         bn8, 8, name='upsample_8x'
@@ -1095,7 +1106,7 @@ def build_segmenter_jet_preconv():
     )
     softmax_8 = Softmax4D(conv_f8, name='4dsoftmax_8x')
 
-    ## COMBINE BY UPSAMPLING CONV 8 AND CONV 6
+    # COMBINE BY UPSAMPLING CONV 8 AND CONV 6
     conv_8_up2 = ll.Upscale2DLayer(bn8, 2, name='upsample_c8_2')  # 4x downsample
     concat_c8_c6 = ll.ConcatLayer([conv_8_up2, bn6], axis=1, name='concat_c8_c6')
     up4 = ll.Upscale2DLayer(
@@ -1112,7 +1123,7 @@ def build_segmenter_jet_preconv():
     )
     softmax_4 = Softmax4D(conv_f4, name='4dsoftmax_4x')  # 4x downsample
 
-    ## COMBINE BY UPSAMPLING CONCAT_86 AND CONV 4
+    # COMBINE BY UPSAMPLING CONCAT_86 AND CONV 4
     concat_86_up2 = ll.Upscale2DLayer(
         concat_c8_c6, 2, name='upsample_concat_86_2'
     )  # 2x downsample
@@ -1133,7 +1144,7 @@ def build_segmenter_jet_preconv():
 
     softmax_2 = Softmax4D(conv_f2, name='4dsoftmax_2x')
 
-    ## COMBINE BY UPSAMPLING CONCAT_864 AND CONV 2
+    # COMBINE BY UPSAMPLING CONCAT_864 AND CONV 2
     concat_864_up2 = ll.Upscale2DLayer(
         concat_ct86_c4, 2, name='upsample_concat_86_2'
     )  # no downsample
