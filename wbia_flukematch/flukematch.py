@@ -20,7 +20,7 @@ from wbia_flukematch.networks import (
 import utool as ut
 import theano.tensor as T
 from theano import function as tfn
-import lasagne.layers as ll
+import Lasagne.lasagne.layers as ll
 from itertools import chain
 import math
 

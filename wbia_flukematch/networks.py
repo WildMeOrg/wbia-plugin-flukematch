@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import lasagne.layers as ll
-from lasagne.nonlinearities import linear, rectify
-from lasagne.init import Orthogonal
+import Lasagne.lasagne.layers as ll
+from Lasagne.lasagne.nonlinearities import linear, rectify
+from Lasagne.lasagne.init import Orthogonal
 import theano.tensor as T
 import sys
 
