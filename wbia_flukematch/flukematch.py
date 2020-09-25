@@ -462,7 +462,7 @@ if HAS_LIB:
 
 def block_integral_curvatures_cpp(sizes, coords):
     """
-        >>> from wbia_flukematch.flukematch import *  # NOQA
+    >>> from wbia_flukematch.flukematch import *  # NOQA
     """
     # assume coords are in x, y
     coords = np.array(coords, dtype=np.int32)
