@@ -32,6 +32,7 @@ CommandLine:
     TESTING:
         ibeis -e rank_cmc --db humpbacks_fb -a default:mingt=2,qsize=10,dsize=100 default:qmingt=2,qsize=10,dsize=100 -t default:proot=BC_DTW,decision=max,crop_dim_size=500,crop_enabled=True,manual_extract=False,use_te_scorer=True,ignore_notch=True,te_score_weight=0.5 --show
 """
+import logging
 import wbia
 import utool as ut
 from wbia import dtool  # NOQA
@@ -65,6 +66,7 @@ from wbia_flukematch.curvrank import get_spatial_weights
 from wbia_flukematch.curvrank import resampleNd
 
 (print, rrr, profile) = ut.inject2(__name__, '[flukeplug]')
+logger = logging.getLogger()
 
 register_preproc = register_preprocs['annot']
 
@@ -110,13 +112,13 @@ def debug_depcache(ibs):
         >>> debug_depcache(ibs)
         >>> ut.show_if_requested()
     """
-    print(ibs.depc)
+    logger.info(ibs.depc)
     nas_notch_deps = ibs.depc.get_dependencies('Has_Notch')
-    print('nas_notch_deps = %r' % (nas_notch_deps,))
+    logger.info('nas_notch_deps = %r' % (nas_notch_deps,))
     te_deps = ibs.depc.get_dependencies('Trailing_Edge')
-    print('te_deps = %r' % (te_deps,))
+    logger.info('te_deps = %r' % (te_deps,))
     notch_tip_deps = ibs.depc.get_dependencies('Notch_Tips')
-    print('notch_tip_deps = %r' % (notch_tip_deps,))
+    logger.info('notch_tip_deps = %r' % (notch_tip_deps,))
     ibs.depc.print_schemas()
     try:
         ibs.depc.show_graph()
@@ -131,8 +133,8 @@ def debug_depcache(ibs):
     # import utool
     # utool.embed()
     # from dtool import depends_cache
-    # print(ut.repr3(depends_cache.PREPROC_REGISTER))
-    # print(ut.repr3(depends_cache.ALGO_REGISTER))
+    # logger.info(ut.repr3(depends_cache.PREPROC_REGISTER))
+    # logger.info(ut.repr3(depends_cache.ALGO_REGISTER))
 
 
 @register_preproc('Has_Notch', [ROOT], ['flag'], [bool])
@@ -170,14 +172,14 @@ def preproc_has_tips(depc, aid_list, config=None):
         >>> print(ibs.get_annot_info(valid_aids[2], default=True))
         >>> print('%r / %r annots have notches' % (num_with, len(aid_list)))
     """
-    print('Preprocess Has_Notch')
-    print(config)
+    logger.info('Preprocess Has_Notch')
+    logger.info(config)
 
     config = config.copy()
     ibs = depc.controller
     fn = join(ibs.get_dbdir(), 'fluke_image_points.pkl')
     if not exists(fn):
-        print('[fluke-module] ERROR: Could not find image points file')
+        logger.info('[fluke-module] ERROR: Could not find image points file')
         raise NotImplementedError('Could not find image points file')
 
     # this is a dict of img: dict of left/right/notch to the xy-point
@@ -270,8 +272,8 @@ def preproc_notch_tips(depc, cid_list, config=None):
         >>> iteract_obj = pt.interact_multi_image.MultiImageInteraction(overlay_chips, nPerPage=4, autostart=True)
         >>> ut.show_if_requested()
     """
-    print('Preprocess Notch_Tips')
-    print(config)
+    logger.info('Preprocess Notch_Tips')
+    logger.info(config)
 
     config = config.copy()
 
@@ -347,7 +349,7 @@ def preproc_notch_tips(depc, cid_list, config=None):
                 )
                 yield (notch_, left_, right_)
             except KeyError:
-                print(
+                logger.info(
                     '[fluke-module] ERROR: aid=%r does not have points associated'
                     % (aid,)
                 )
@@ -356,11 +358,11 @@ def preproc_notch_tips(depc, cid_list, config=None):
                     'ERROR: aid=%r does not have points associated' % (aid,)
                 )
             except AssertionError:
-                print(
+                logger.info(
                     '[fluke-module] ERROR: aid=%r has associated points that are out of bounds'
                     % (aid,)
                 )
-                print(
+                logger.info(
                     '[fluke-module] ERROR: Points: Notch: %s, Left: %s, Right: %s -- Chip Size: %s'
                     % (notch_, left_, right_, size)
                 )
@@ -478,11 +480,11 @@ def preproc_cropped_chips(depc, cid_list, tipid_list, config=None):
             # new_y = int(new_x / ratio)
             # chip_size = (new_x, new_y)
             try:
-                # print("[cropped-chips] %s: bbox: %r, l/n/r %r" % (path, bbox,tips))
+                # logger.info("[cropped-chips] %s: bbox: %r, l/n/r %r" % (path, bbox,tips))
                 chip_size = vt.ScaleStrat.width(new_x, (bbox[2], bbox[3]))
                 # chip_size = vt.get_scaled_size_with_width(new_x, bbox[2], bbox[3])
             except OverflowError:
-                print(
+                logger.info(
                     '[cropped chip] WARNING: Probably got a bad keypoint prediction: bbox: %r'
                     % (bbox,)
                 )
@@ -600,8 +602,8 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
         >>> pt.show_if_requested()
 
     """
-    print('Preprocess Trailing_Edge')
-    print(config)
+    logger.info('Preprocess Trailing_Edge')
+    logger.info(config)
 
     config = config.copy()
     ibs = depc.controller
@@ -630,7 +632,7 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
     try:
         n_neighbors = config['n_neighbors']
     except KeyError:
-        print(
+        logger.info(
             '[fluke-module] WARNING: Number of neighbors for trailing edge'
             'extraction not provided, defaulting to 5'
         )
@@ -667,8 +669,8 @@ def preproc_trailing_edge(depc, cpid_list, config=None):
             )
             yield (tedge, cost, score_pred)
         except IndexError as ie:
-            print(ie)
-            print('Bad points for %s: %r' % (img_path, point_set))
+            logger.info(ie)
+            logger.info('Bad points for %s: %r' % (img_path, point_set))
             yield None
 
 
@@ -758,8 +760,8 @@ def preproc_block_curvature(depc, te_rowids, config):
         >>> result = ut.depth_profile(curve_arr_list)
         >>> print(result)
     """
-    print('Preprocess Block_Curvature')
-    print(config)
+    logger.info('Preprocess Block_Curvature')
+    logger.info(config)
 
     ibs = depc.controller
     # NOTE: Need to use get_native_property because the take the type
@@ -830,8 +832,8 @@ def preproc_oriented_curvature(depc, te_rowids, config):
         >>> result = ut.depth_profile(curve_arr_list)
         >>> print(result)
     """
-    print('Preprocess Oriented_Curvature')
-    print(config)
+    logger.info('Preprocess Oriented_Curvature')
+    logger.info(config)
 
     ibs = depc.controller
     # NOTE: Need to use get_native_property because the take the type
@@ -1037,7 +1039,7 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
         >>> am.ishow_analysis(request)
         >>> ut.show_if_requested()
     """
-    print('Executing BC_DTW')
+    logger.info('Executing BC_DTW')
     sizes = list(
         range(
             config.block_curv_cfg['csize_min'],
@@ -1054,7 +1056,7 @@ def id_algo_bc_dtw(depc, qaid_list, daid_list, config):
         query_curv = aid_to_curves[qaid]
         db_curv = aid_to_curves[daid]
         if query_curv is None or db_curv is None:
-            # print("Comparison of qaid: %d and daid: %d -- one of the curvatures is None, skipping" % (qaid, daid))
+            # logger.info("Comparison of qaid: %d and daid: %d -- one of the curvatures is None, skipping" % (qaid, daid))
             yield None
         else:
             # determine window as a percentage of the query trailing edge
@@ -1158,7 +1160,7 @@ def id_algo_oc_wdtw(depc, qaid_list, daid_list, config):
         >>> am.ishow_analysis(request)
         >>> ut.show_if_requested()
     """
-    print('Executing OC_WDTW')
+    logger.info('Executing OC_WDTW')
     # Group pairs by qaid
     all_aids = np.unique(ut.flatten([qaid_list, daid_list]))
     all_curves = depc.get('Oriented_Curvature', all_aids, 'curvature', config=config)
