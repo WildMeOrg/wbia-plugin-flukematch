@@ -982,13 +982,14 @@ class BC_DTW_Request(dtool.base.VsOneSimilarityRequest):
         out_img = vt.stack_image_list(chips)
         return out_img
 
-    def postprocess_execute(request, parent_rowids, result_list):
+    def postprocess_execute(request, table, parent_rowids, rowids, result_list):
         qaid_list, daid_list = list(zip(*parent_rowids))
         score_list = [i[0] if i is not None else 0.0 for i in result_list]
         # score_list = ut.take_column(result_list, 0)
         depc = request.depc
         config = request.config
         cm_list = list(get_match_results(depc, qaid_list, daid_list, score_list, config))
+        table.delete_rows(rowids)
         return cm_list
 
 
@@ -1107,13 +1108,14 @@ class OC_WDTW_Request(dtool.base.VsOneSimilarityRequest):
     _tablename = 'OC_WDTW'
     _symmetric = False
 
-    def postprocess_execute(request, parent_rowids, result_list):
+    def postprocess_execute(request, table, parent_rowids, rowids, result_list):
         qaid_list, daid_list = list(zip(*parent_rowids))
         score_list = [i[0] if i is not None else 0.0 for i in result_list]
         # score_list = ut.take_column(result_list, 0)
         depc = request.depc
         config = request.config
         cm_list = list(get_match_results(depc, qaid_list, daid_list, score_list, config))
+        table.delete_rows(rowids)
         return cm_list
 
 
