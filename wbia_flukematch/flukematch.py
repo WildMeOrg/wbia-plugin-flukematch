@@ -19,6 +19,8 @@ from wbia_flukematch.networks import (
 import utool as ut
 import theano.tensor as T
 from theano import function as tfn
+import wbia_cnn  # NOQA
+import Lasagne  # NOQA
 import Lasagne.lasagne.layers as ll
 from itertools import chain
 import math
