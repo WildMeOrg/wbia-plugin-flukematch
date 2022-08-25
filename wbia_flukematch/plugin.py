@@ -70,7 +70,7 @@ logger = logging.getLogger()
 
 register_preproc = register_preprocs['annot']
 
-ROOT = wbia.const.ANNOTATION_TABLE
+ROOT = const.ANNOTATION_TABLE
 
 # register : name, parent(s), cols, dtypes
 
